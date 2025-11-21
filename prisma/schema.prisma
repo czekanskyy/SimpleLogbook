@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Flight {
+  id String @id @default(cuid())
+  
+  date DateTime
+  
+  departurePlace String
+  departureTime  String // HH:MM
+  
+  arrivalPlace String
+  arrivalTime  String // HH:MM
+  
+  aircraftModel String
+  aircraftReg   String
+  
+  // Times in minutes
+  singlePilotSE Int @default(0)
+  singlePilotME Int @default(0)
+  multiPilot    Int @default(0)
+  
+  totalTime     Int @default(0)
+  
+  picName       String // SKALSKI, SINICA, SELF
+  
+  landingsDay   Int @default(0)
+  landingsNight Int @default(0)
+  
+  nightTime     Int @default(0)
+  ifrTime       Int @default(0)
+  
+  picTime       Int @default(0)
+  copilotTime   Int @default(0)
+  dualTime      Int @default(0)
+  instructorTime Int @default(0)
+  
+  remarks       String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Settings {
+  id          String @id @default(cuid())
+  rowsPerPage Int    @default(14)
+}

@@ -1,0 +1,27 @@
+-- CreateTable
+CREATE TABLE "Flight" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "date" DATETIME NOT NULL,
+    "departurePlace" TEXT NOT NULL,
+    "departureTime" TEXT NOT NULL,
+    "arrivalPlace" TEXT NOT NULL,
+    "arrivalTime" TEXT NOT NULL,
+    "aircraftModel" TEXT NOT NULL,
+    "aircraftReg" TEXT NOT NULL,
+    "singlePilotSE" INTEGER NOT NULL DEFAULT 0,
+    "singlePilotME" INTEGER NOT NULL DEFAULT 0,
+    "multiPilot" INTEGER NOT NULL DEFAULT 0,
+    "totalTime" INTEGER NOT NULL DEFAULT 0,
+    "picName" TEXT NOT NULL,
+    "landingsDay" INTEGER NOT NULL DEFAULT 0,
+    "landingsNight" INTEGER NOT NULL DEFAULT 0,
+    "nightTime" INTEGER NOT NULL DEFAULT 0,
+    "ifrTime" INTEGER NOT NULL DEFAULT 0,
+    "picTime" INTEGER NOT NULL DEFAULT 0,
+    "copilotTime" INTEGER NOT NULL DEFAULT 0,
+    "dualTime" INTEGER NOT NULL DEFAULT 0,
+    "instructorTime" INTEGER NOT NULL DEFAULT 0,
+    "remarks" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);

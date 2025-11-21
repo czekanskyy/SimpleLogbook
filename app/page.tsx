@@ -1,65 +1,52 @@
-import Image from "next/image";
+import { getFlights, getSettings } from '@/app/lib/actions'
+import LogbookView from '@/app/components/LogbookView'
 
-export default function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const params = await searchParams
+  const page = parseInt((params.page as string) || '1')
+  const year = params.year ? parseInt(params.year as string) : undefined
+  
+  const settings = await getSettings()
+  const rowsPerPage = settings.rowsPerPage
+
+  const { flights, totalCount, lifetimeTotals, previousTotals } = await getFlights(page, rowsPerPage, year)
+  
+  const totalPages = Math.ceil(totalCount / rowsPerPage)
+
+  // Calculate Page Totals
+  const pageTotals = flights.reduce((acc, flight) => ({
+    singlePilotSE: acc.singlePilotSE + flight.singlePilotSE,
+    singlePilotME: acc.singlePilotME + flight.singlePilotME,
+    multiPilot: acc.multiPilot + flight.multiPilot,
+    totalTime: acc.totalTime + flight.totalTime,
+    landingsDay: acc.landingsDay + flight.landingsDay,
+    landingsNight: acc.landingsNight + flight.landingsNight,
+    nightTime: acc.nightTime + flight.nightTime,
+    ifrTime: acc.ifrTime + flight.ifrTime,
+    picTime: acc.picTime + flight.picTime,
+    copilotTime: acc.copilotTime + flight.copilotTime,
+    dualTime: acc.dualTime + flight.dualTime,
+    instructorTime: acc.instructorTime + flight.instructorTime,
+  }), {
+    singlePilotSE: 0, singlePilotME: 0, multiPilot: 0, totalTime: 0,
+    landingsDay: 0, landingsNight: 0, nightTime: 0, ifrTime: 0,
+    picTime: 0, copilotTime: 0, dualTime: 0, instructorTime: 0
+  })
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    <LogbookView 
+      flights={flights}
+      page={page}
+      totalPages={totalPages}
+      pageTotals={pageTotals}
+      previousTotals={previousTotals}
+      lifetimeTotals={lifetimeTotals}
+      rowsPerPage={rowsPerPage}
+      year={year}
+    />
+  )
 }
