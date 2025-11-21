@@ -5,3 +5,19 @@
 body {
   @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white antialiased transition-colors duration-300;
 }
+
+/* Global cursor pointer for buttons and interactive elements */
+button,
+a[href],
+[role="button"],
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+select {
+  cursor: pointer;
+}
+
+button:disabled,
+a[aria-disabled="true"] {
+  cursor: not-allowed;
+}

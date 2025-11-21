@@ -4,16 +4,15 @@ import { prisma } from './db'
 import { flightSchema, FlightFormData } from './schema'
 import { revalidatePath } from 'next/cache'
 import { Prisma } from '@prisma/client'
+import { auth } from '@/auth'
 
 export async function getFlights(page: number = 1, pageSize?: number, year?: number) {
-  // If pageSize is not provided, fetch from settings
   let limit = pageSize
   if (!limit) {
     const settings = await getSettings()
     limit = settings.rowsPerPage
   }
   
-  // Ensure limit is a number
   const safeLimit = limit || 14
 
   const where: Prisma.FlightWhereInput = year ? {
@@ -29,7 +28,6 @@ export async function getFlights(page: number = 1, pageSize?: number, year?: num
     { createdAt: 'asc' }
   ]
 
-  // 1. Fetch current page flights
   const flights = await prisma.flight.findMany({
     where,
     orderBy,
@@ -37,10 +35,8 @@ export async function getFlights(page: number = 1, pageSize?: number, year?: num
     skip: (page - 1) * safeLimit,
   })
 
-  // 2. Count total flights (for pagination)
   const totalCount = await prisma.flight.count({ where })
 
-  // 3. Calculate Lifetime Totals (Grand Total) - ignores year filter usually, but let's return both
   const lifetimeAgg = await prisma.flight.aggregate({
     _sum: {
       totalTime: true,
@@ -58,9 +54,6 @@ export async function getFlights(page: number = 1, pageSize?: number, year?: num
     }
   })
 
-  // 4. Calculate Previous Totals (Sum of flights before this page)
-  // We fetch all flights up to the start of this page to sum them.
-  // Optimization: If page is 1, previous is 0.
   let previousTotals = null
   if (page > 1) {
     const previousFlights = await prisma.flight.findMany({
@@ -116,11 +109,6 @@ export async function getFlights(page: number = 1, pageSize?: number, year?: num
 }
 
 export async function createFlight(data: FlightFormData) {
-  // Calculate total time if not provided? 
-  // For now, assume user provides it or we calculate it in UI. 
-  // But let's ensure totalTime is consistent if 0.
-  // Actually, let's just save what we get.
-  
   const flight = await prisma.flight.create({
     data
   })
@@ -135,11 +123,6 @@ export async function deleteFlight(id: string) {
 }
 
 export async function importFlights(flights: FlightFormData[]) {
-  // Bulk create
-  // We need to ensure data matches the schema.
-  // Assuming validation happens before this call or we validate here.
-  // Prisma createMany is efficient.
-  
   await prisma.flight.createMany({
     data: flights
   })
@@ -148,22 +131,55 @@ export async function importFlights(flights: FlightFormData[]) {
 }
 
 export async function getSettings() {
-  const settings = await prisma.settings.findFirst()
-  if (!settings) {
+  const session = await auth()
+  
+  if (session?.user?.id) {
+    const settings = await prisma.settings.findUnique({
+      where: { userId: session.user.id }
+    })
+    
+    if (settings) return settings
+    
     return await prisma.settings.create({
-      data: { rowsPerPage: 14 }
+      data: { 
+        userId: session.user.id,
+        rowsPerPage: 14,
+        language: 'en'
+      }
     })
   }
-  return settings
+  
+  return { rowsPerPage: 14, language: 'en', id: 'default' }
 }
 
-export async function updateSettings(rowsPerPage: number) {
-  const settings = await getSettings()
-  await prisma.settings.update({
-    where: { id: settings.id },
-    data: { rowsPerPage }
-  })
-  revalidatePath('/')
+export async function updateSettings(data: { rowsPerPage?: number; language?: string }) {
+  const session = await auth()
+  
+  if (session?.user?.id) {
+    const settings = await prisma.settings.findUnique({
+      where: { userId: session.user.id }
+    })
+
+    const updateData: any = {}
+    if (data.rowsPerPage !== undefined) updateData.rowsPerPage = data.rowsPerPage
+    if (data.language !== undefined) updateData.language = data.language
+
+    if (settings) {
+      await prisma.settings.update({
+        where: { id: settings.id },
+        data: updateData
+      })
+    } else {
+      await prisma.settings.create({
+        data: {
+          userId: session.user.id,
+          rowsPerPage: data.rowsPerPage || 14,
+          language: data.language || 'en'
+        }
+      })
+    }
+    revalidatePath('/')
+  }
 }
 
 export async function getUniqueAircraftRegistrations() {
@@ -219,4 +235,150 @@ export async function getUniqueArrivalPlaces() {
   return flights.map(f => f.arrivalPlace)
 }
 
+export async function getUsers() {
+  const session = await auth()
+  if (session?.user?.role !== 'ADMIN') {
+    throw new Error('Unauthorized')
+  }
+  
+  return await prisma.user.findMany({
+    orderBy: { createdAt: 'desc' }
+  })
+}
 
+export async function toggleUserApproval(formData: FormData) {
+  const session = await auth()
+  if (session?.user?.role !== 'ADMIN') {
+    throw new Error('Unauthorized')
+  }
+
+  const userId = formData.get('userId') as string
+  const currentStatus = formData.get('currentStatus') === 'true'
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { isApproved: !currentStatus }
+  })
+
+  revalidatePath('/admin')
+}
+
+export async function registerUser(formData: FormData) {
+  const name = formData.get('name') as string
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+
+  if (!name || !email || !password) {
+    return { success: false, error: 'All fields are required' }
+  }
+
+  if (password.length < 6) {
+    return { success: false, error: 'Password must be at least 6 characters' }
+  }
+
+  try {
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    })
+
+    if (existingUser) {
+      return { success: false, error: 'User with this email already exists' }
+    }
+
+    const bcrypt = require('bcryptjs')
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    const colors = ['blue', 'red', 'green', 'yellow', 'purple', 'pink', 'indigo', 'cyan', 'orange']
+    const randomColor = colors[Math.floor(Math.random() * colors.length)]
+
+    await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: 'USER',
+        isApproved: false,
+        avatarColor: randomColor,
+      }
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error('Registration error:', error)
+    return { success: false, error: `Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}` }
+  }
+}
+
+export async function updateProfile(formData: FormData) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized")
+  }
+
+  const name = formData.get("name") as string
+  const email = formData.get("email") as string
+  const password = formData.get("password") as string
+
+  const data: any = {}
+  if (name) data.name = name
+  if (email) data.email = email
+  if (password) {
+    const bcrypt = require("bcryptjs")
+    data.password = await bcrypt.hash(password, 10)
+  }
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data,
+  })
+
+  revalidatePath("/")
+}
+
+export async function changeUserRole(formData: FormData) {
+  const session = await auth()
+  if (session?.user?.role !== 'ADMIN') {
+    throw new Error("Unauthorized")
+  }
+
+  const userId = formData.get('userId') as string
+  const role = formData.get('role') as 'USER' | 'ADMIN'
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { role }
+  })
+
+  revalidatePath('/admin')
+}
+
+export async function deleteUser(formData: FormData) {
+  const session = await auth()
+  if (session?.user?.role !== 'ADMIN') {
+    throw new Error("Unauthorized")
+  }
+
+  const userId = formData.get('userId') as string
+
+  await prisma.session.deleteMany({
+    where: { userId }
+  })
+
+  await prisma.account.deleteMany({
+    where: { userId }
+  })
+
+  await prisma.settings.deleteMany({
+    where: { userId }
+  })
+
+  await prisma.flight.deleteMany({
+    where: { userId }
+  })
+
+  await prisma.user.delete({
+    where: { id: userId }
+  })
+
+  revalidatePath('/admin')
+}

@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  simplelogbook:
+    build: .
+    image: simplelogbook:latest
+    container_name: simplelogbook
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/db/prod.db
+      - AUTH_SECRET=changeme_to_a_secure_random_string
+      - AUTH_TRUST_HOST=true
+      # SMTP Configuration (Optional - for emails)
+      # - SMTP_HOST=smtp.example.com
+      # - SMTP_PORT=587
+      # - SMTP_USER=user@example.com
+      # - SMTP_PASSWORD=password
+      # - SMTP_FROM=admin@example.com
+    volumes:
+      - ./db:/app/db

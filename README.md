@@ -10,6 +10,8 @@ A modern, EASA PART FCL.050 compliant pilot logbook application built with Next.
 ## Features
 
 - ✅ **PART FCL.050 Compliance** - Meets all EASA logbook requirements
+- ✅ **Secure Authentication** - User registration, login, and admin approval system
+- ✅ **Admin Panel** - Manage users, roles, and approvals
 - ✅ **Modern UI** - Beautiful, responsive design with dark mode
 - ✅ **Smart Autocomplete** - Type-ahead suggestions for airports, aircraft, and pilot names
 - ✅ **Auto-calculations** - Flight time calculated automatically from departure/arrival times
@@ -17,6 +19,7 @@ A modern, EASA PART FCL.050 compliant pilot logbook application built with Next.
 - ✅ **Comprehensive Help** - Built-in documentation for PART FCL.050 requirements
 - ✅ **Bilingual** - Full support for Polish and English
 - ✅ **Offline Ready** - SQLite database, works without internet connection
+- ✅ **Docker Support** - Ready for containerized deployment
 
 ## Screenshots
 
@@ -26,6 +29,7 @@ A modern, EASA PART FCL.050 compliant pilot logbook application built with Next.
 
 - **Framework**: [Next.js 15](https://nextjs.org/) with App Router
 - **Database**: SQLite with [Prisma ORM](https://www.prisma.io/)
+- **Authentication**: [NextAuth.js](https://next-auth.js.org/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **Language**: TypeScript
 - **Icons**: [Lucide React](https://lucide.dev/)
@@ -34,14 +38,33 @@ A modern, EASA PART FCL.050 compliant pilot logbook application built with Next.
 
 - Node.js 18+ installed
 - npm or yarn package manager
+- OR Docker and Docker Compose
 
 ## Installation
+
+### Method 1: Docker (Recommended)
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/czekanskyy/SimpleLogbook.git
+   cd SimpleLogbook
+   ```
+
+2. **Configure Environment**
+   Edit `docker-compose.yml` to set your `AUTH_SECRET`.
+
+3. **Run with Docker Compose**
+   ```bash
+   docker-compose up -d
+   ```
+
+### Method 2: Manual Installation
 
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/simplelogbook.git
-cd simplelogbook
+git clone https://github.com/czekanskyy/SimpleLogbook.git
+cd SimpleLogbook
 ```
 
 2. **Install dependencies**
@@ -50,19 +73,20 @@ cd simplelogbook
 npm install
 ```
 
-3. **Set up the database**
+3. **Set up the database and environment**
 
 Create a `.env` file in the root directory:
 
 ```env
 DATABASE_URL="file:./prisma/dev.db"
+AUTH_SECRET="your-secret-key-here" # Generate with: openssl rand -base64 32
 ```
 
 Initialize the database:
 
 ```bash
-npx prisma migrate dev
 npx prisma generate
+npx prisma db push
 ```
 
 4. **Run the development server**
@@ -74,6 +98,11 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Usage
+
+### Authentication
+- **Register**: Create a new account.
+- **Approval**: New accounts require Admin approval before logging in.
+- **Admin**: The first user or designated admin can manage users at `/admin`.
 
 ### Adding Flights
 
@@ -127,8 +156,20 @@ For detailed field explanations, click the **"Pomoc"** (Help) button in the appl
 ## Database Schema
 
 ```prisma
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  role          String    @default("USER") // USER, ADMIN
+  isApproved    Boolean   @default(false)
+  flights       Flight[]
+  settings      Settings?
+  // ... other auth fields
+}
+
 model Flight {
-  id               Int      @id @default(autoincrement())
+  id               String   @id @default(cuid())
   date             DateTime
   departurePlace   String
   departureTime    String
@@ -150,6 +191,8 @@ model Flight {
   dualTime         Int      // minutes
   instructorTime   Int      // minutes
   remarks          String?
+  userId           String?
+  user             User?    @relation(fields: [userId], references: [id])
   createdAt        DateTime @default(now())
 }
 ```
