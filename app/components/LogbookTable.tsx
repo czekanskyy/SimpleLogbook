@@ -139,7 +139,7 @@ export default function LogbookTable({
               <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" colSpan={2}>{t.operationalCondition}</th>
               <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" colSpan={4}>{t.pilotFunctionTime}</th>
               <th className="p-4 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" rowSpan={3}>{t.remarks}</th>
-              <th className="p-4 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" rowSpan={3}>Actions</th>
+              <th className="p-4 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" rowSpan={3}>{t.actions}</th>
             </tr>
             <tr>
               <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.place}</th>
@@ -177,7 +177,7 @@ export default function LogbookTable({
                 <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-right">{formatTime(flight.singlePilotSE)}</td>
                 <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-right">{formatTime(flight.singlePilotME)}</td>
                 <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-right">{formatTime(flight.multiPilot)}</td>
-                <td className="p-2 border-r border-gray-200 dark:border-gray-700 font-bold text-blue-600 dark:text-blue-500 text-right">{formatTime(flight.totalTime)}</td>
+                <td className="p-2 border-r border-gray-200 dark:border-gray-700 font-bold text-gray-900 dark:text-white text-right">{formatTime(flight.totalTime)}</td>
                 <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-left pl-3">{flight.picName}</td>
                 <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-right">{flight.landingsDay || ''}</td>
                 <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-right">{flight.landingsNight || ''}</td>
@@ -217,7 +217,7 @@ export default function LogbookTable({
               <td className="p-2 border-r border-gray-300 dark:border-gray-600 text-right">{formatTime(pageTotals.singlePilotSE)}</td>
               <td className="p-2 border-r border-gray-300 dark:border-gray-600 text-right">{formatTime(pageTotals.singlePilotME)}</td>
               <td className="p-2 border-r border-gray-300 dark:border-gray-600 text-right">{formatTime(pageTotals.multiPilot)}</td>
-              <td className="p-2 border-r border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400 text-right">{formatTime(pageTotals.totalTime)}</td>
+              <td className="p-2 border-r border-gray-300 dark:border-gray-600 font-bold text-gray-900 dark:text-white text-right">{formatTime(pageTotals.totalTime)}</td>
               <td className="p-2 border-r border-gray-300 dark:border-gray-600"></td>
               <td className="p-2 border-r border-gray-300 dark:border-gray-600 text-right">{pageTotals.landingsDay}</td>
               <td className="p-2 border-r border-gray-300 dark:border-gray-600 text-right">{pageTotals.landingsNight}</td>
@@ -257,7 +257,7 @@ export default function LogbookTable({
               <td className="p-2 border-r border-gray-400 dark:border-gray-600 text-right">{formatTime(previousTotals.singlePilotSE + pageTotals.singlePilotSE)}</td>
               <td className="p-2 border-r border-gray-400 dark:border-gray-600 text-right">{formatTime(previousTotals.singlePilotME + pageTotals.singlePilotME)}</td>
               <td className="p-2 border-r border-gray-400 dark:border-gray-600 text-right">{formatTime(previousTotals.multiPilot + pageTotals.multiPilot)}</td>
-              <td className="p-2 border-r border-gray-400 dark:border-gray-600 text-blue-700 dark:text-blue-400 text-right">{formatTime(previousTotals.totalTime + pageTotals.totalTime)}</td>
+              <td className="p-2 border-r border-gray-400 dark:border-gray-600 font-bold text-gray-900 dark:text-white text-right">{formatTime(previousTotals.totalTime + pageTotals.totalTime)}</td>
               <td className="p-2 border-r border-gray-400 dark:border-gray-600"></td>
               <td className="p-2 border-r border-gray-400 dark:border-gray-600 text-right">{previousTotals.landingsDay + pageTotals.landingsDay}</td>
               <td className="p-2 border-r border-gray-400 dark:border-gray-600 text-right">{previousTotals.landingsNight + pageTotals.landingsNight}</td>
@@ -282,20 +282,23 @@ export default function LogbookTable({
         >
           {t.previous}
         </button>
-        <span className="text-sm text-gray-700 dark:text-gray-300">{t.page} {page} {t.of} {totalPages || 1}</span>
         
-        <form onSubmit={handleJumpPage} className="flex items-center gap-2">
-          <input 
-            type="number" 
-            min="1" 
-            max={totalPages} 
-            value={jumpPage}
-            onChange={(e) => setJumpPage(e.target.value)}
-            placeholder="#"
-            className="w-12 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
-          />
-          <button type="submit" className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600">Go</button>
-        </form>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-700 dark:text-gray-300">{t.page} {page} {t.of} {totalPages || 1}</span>
+          
+          <form onSubmit={handleJumpPage} className="flex items-center gap-2">
+            <input 
+              type="number" 
+              min="1" 
+              max={totalPages} 
+              value={jumpPage}
+              onChange={(e) => setJumpPage(e.target.value)}
+              placeholder="#"
+              className="w-12 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
+            />
+            <button type="submit" className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600">{t.go}</button>
+          </form>
+        </div>
 
         <button 
           disabled={page >= totalPages}

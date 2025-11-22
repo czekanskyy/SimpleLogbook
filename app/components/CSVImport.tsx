@@ -79,8 +79,8 @@ export default function CSVImport() {
         disabled={uploading}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-medium text-sm
           ${uploading 
-            ? 'bg-white/5 text-slate-500 cursor-not-allowed' 
-            : 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-blue-400 border border-white/5 hover:border-white/10'
+            ? 'bg-blue-600/50 text-white cursor-not-allowed' 
+            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800'
           }`}
         title={t.importCsv}
       >

@@ -10,7 +10,7 @@ import HelpModal from '@/app/components/HelpModal'
 import ProfileModal from '@/app/components/ProfileModal'
 import { deleteFlight } from '@/app/lib/actions'
 import { useUI } from '@/app/context/UIContext'
-import { Download } from 'lucide-react'
+import { Download, Plus } from 'lucide-react'
 
 interface LogbookViewProps {
   flights: Flight[]
@@ -37,6 +37,7 @@ export default function LogbookView({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [editingFlight, setEditingFlight] = useState<Flight | null>(null)
+  const [isAddingFlight, setIsAddingFlight] = useState(false)
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this flight?')) {
@@ -60,16 +61,23 @@ export default function LogbookView({
           </div>
           
           <div className="flex items-center gap-4">
-            <AddEntryModal />
             <button
-              onClick={handleExport}
+              onClick={() => setIsAddingFlight(true)}
               className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium text-sm shadow-sm focus:ring-4 focus:ring-green-300 dark:focus:ring-green-800"
-              title={t.importCsv} // Reusing importCsv label or adding new one? Let's use a generic one or add exportCsv
+              title={t.addFlight}
             >
-              <Download size={16} />
-              <span className="hidden sm:inline">Export CSV</span>
+              <Plus size={16} />
+              <span className="hidden sm:inline">{t.addFlight}</span>
             </button>
             <CSVImport />
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors font-medium text-sm shadow-sm focus:ring-4 focus:ring-slate-300 dark:focus:ring-slate-800"
+              title={t.exportCsv}
+            >
+              <Download size={16} />
+              <span className="hidden sm:inline">{t.exportCsv}</span>
+            </button>
             <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2"></div>
             <HelpModal />
             <button
@@ -146,9 +154,13 @@ export default function LogbookView({
       />
       
       <AddEntryModal
-        isOpen={!!editingFlight}
-        onClose={() => setEditingFlight(null)}
+        isOpen={isAddingFlight || !!editingFlight}
+        onClose={() => {
+          setIsAddingFlight(false)
+          setEditingFlight(null)
+        }}
         initialData={editingFlight}
+        hideTrigger
       />
     </main>
   )

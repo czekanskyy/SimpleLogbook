@@ -59,6 +59,10 @@ export const translations = {
     filter: 'Filtruj',
     saveEntry: 'Zapisz Wpis',
     cancel: 'Anuluj',
+    actions: 'Akcje',
+    go: 'Idź',
+    exportCsv: 'Eksportuj CSV',
+    fill: 'Wypełnij',
     details: 'Szczegóły',
     times: 'Czasy',
     saveSettings: 'Zapisz Ustawienia',
@@ -122,7 +126,17 @@ export const translations = {
     helpCSVExample: 'Przykład:\n2024-01-15,EPWA,10:00,EPKK,12:30,C172,SP-ABC,02:30,00:00,00:00,02:30,KOWALSKI,1,0,00:00,00:00,00:00,00:00,02:30,00:00,',
     
     helpTips: 'Wskazówki',
-    helpTipsContent: '• Używaj autocomplete - wpisuj częściowe dane, a system podpowie istniejące wpisy\n• Rejestracja wypełnia Model automatycznie\n• Czas lotu oblicza się automatycznie na podstawie czasu startu i lądowania\n• Używaj kodów ICAO dla lotnisk (4 znaki)\n• Czasy podawaj w formacie HH:MM lub H:MM'
+    helpTipsContent: '• Używaj autocomplete - wpisuj częściowe dane, a system podpowie istniejące wpisy\n• Rejestracja wypełnia Model automatycznie\n• Czas lotu oblicza się automatycznie na podstawie czasu startu i lądowania\n• Używaj kodów ICAO dla lotnisk (4 znaki)\n• Czasy podawaj w formacie HH:MM lub H:MM',
+    
+    // Validation Errors
+    valRequired: 'Wymagane pola: Data, Odlot, Przylot, Rejestracja, Model, Nazwisko PIC',
+    valLandings: 'Suma lądowań musi być większa lub równa 1',
+    valDateLimit: 'Data musi być pomiędzy 17.12.1903 a dzisiaj',
+    valTimeSum: 'Suma czasów SE, ME, MP musi równać się Czasowi Całkowitemu',
+    valSingleCat: 'Tylko jedna kategoria (SE, ME, MP) może być wypełniona',
+    valPilotFunc: 'Suma czasów PIC, COP, DUAL, INSTR musi równać się Czasowi Całkowitemu',
+    valNight: 'Czas w nocy nie może być większy niż Czas Całkowity',
+    valIfr: 'Czas IFR nie może być większy niż Czas Całkowity'
   },
   en: {
     // Headers
@@ -182,6 +196,10 @@ export const translations = {
     filter: 'Filter',
     saveEntry: 'Save Entry',
     cancel: 'Cancel',
+    actions: 'Actions',
+    go: 'Go',
+    exportCsv: 'Export CSV',
+    fill: 'Fill',
     details: 'Details',
     times: 'Times',
     saveSettings: 'Save Settings',
@@ -245,6 +263,16 @@ export const translations = {
     helpCSVExample: 'Example:\n2024-01-15,EPWA,10:00,EPKK,12:30,C172,SP-ABC,02:30,00:00,00:00,02:30,SMITH,1,0,00:00,00:00,00:00,00:00,02:30,00:00,',
     
     helpTips: 'Tips',
-    helpTipsContent: '• Use autocomplete - type partial data and the system will suggest existing entries\n• Registration auto-fills Model automatically\n• Flight time is calculated automatically based on departure and arrival times\n• Use ICAO codes for airports (4 characters)\n• Enter times in HH:MM or H:MM format'
+    helpTipsContent: '• Use autocomplete - type partial data and the system will suggest existing entries\n• Registration auto-fills Model automatically\n• Flight time is calculated automatically based on departure and arrival times\n• Use ICAO codes for airports (4 characters)\n• Enter times in HH:MM or H:MM format',
+
+    // Validation Errors
+    valRequired: 'Required fields: Date, Departure, Arrival, Registration, Model, PIC Name',
+    valLandings: 'Sum of landings must be at least 1',
+    valDateLimit: 'Date must be between 17.12.1903 and today',
+    valTimeSum: 'Sum of SE, ME, MP times must equal Total Time',
+    valSingleCat: 'Only one category (SE, ME, MP) can be filled',
+    valPilotFunc: 'Sum of PIC, COP, DUAL, INSTR times must equal Total Time',
+    valNight: 'Night time cannot be greater than Total Time',
+    valIfr: 'IFR time cannot be greater than Total Time'
   }
 }

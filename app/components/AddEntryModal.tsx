@@ -12,12 +12,14 @@ interface AddEntryModalProps {
   isOpen?: boolean
   onClose?: () => void
   initialData?: Flight | null
+  hideTrigger?: boolean
 }
 
 export default function AddEntryModal({ 
   isOpen: externalIsOpen, 
   onClose, 
-  initialData 
+  initialData,
+  hideTrigger
 }: AddEntryModalProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(false)
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
@@ -37,8 +39,7 @@ export default function AddEntryModal({
   const [registrations, setRegistrations] = useState<string[]>([])
   const [models, setModels] = useState<string[]>([])
   const [picNames, setPicNames] = useState<string[]>([])
-  const [departurePlaces, setDeparturePlaces] = useState<string[]>([])
-  const [arrivalPlaces, setArrivalPlaces] = useState<string[]>([])
+  const [places, setPlaces] = useState<string[]>([]) // Merged places
   
   const { t } = useUI()
   
@@ -125,8 +126,9 @@ export default function AddEntryModal({
         setRegistrations(regs)
         setModels(mods)
         setPicNames(pics)
-        setDeparturePlaces(deps)
-        setArrivalPlaces(arrs)
+        // Merge and deduplicate places
+        const allPlaces = Array.from(new Set([...deps, ...arrs])).sort()
+        setPlaces(allPlaces)
       } catch (err) {
         console.error('Error loading suggestions:', err)
       }
@@ -171,18 +173,74 @@ export default function AddEntryModal({
         totalMinutes = parseTime(calculatedFlightTime)
       }
       
+      // Validation: Required fields
+      if (!rawData.date || !rawData.departurePlace || !rawData.departureTime || !rawData.arrivalPlace || !rawData.arrivalTime || !rawData.aircraftReg || !rawData.aircraftModel || (!isSelf && !rawData.picName)) {
+        setError(t.valRequired || 'Required fields missing')
+        return
+      }
+
+      // Validation: Date limits
+      const flightDate = new Date(rawData.date)
+      const minDate = new Date('1903-12-17')
+      const today = new Date()
+      today.setHours(23, 59, 59, 999)
+      
+      if (flightDate < minDate || flightDate > today) {
+        setError(t.valDateLimit || 'Date must be between 17.12.1903 and today')
+        return
+      }
+
+      // Validation: Landings
+      const ldgDay = parseInt(rawData.landingsDay || '0')
+      const ldgNight = parseInt(rawData.landingsNight || '0')
+      if (ldgDay + ldgNight < 1) {
+        setError(t.valLandings || 'Sum of landings must be at least 1')
+        return
+      }
+
       // Validation: Check if category times match total time
       const se = toMin(rawData.singlePilotSE)
       const me = toMin(rawData.singlePilotME)
       const mp = toMin(rawData.multiPilot)
       
+      // Only one category allowed
+      const categoriesFilled = [se, me, mp].filter(v => v > 0).length
+      if (categoriesFilled > 1) {
+        setError(t.valSingleCat || 'Only one category (SE, ME, MP) can be filled')
+        return
+      }
+
       if (se + me + mp !== totalMinutes) {
-        setError(`Total time (${formatTime(totalMinutes)}) does not match sum of SE, ME, and MP times (${formatTime(se + me + mp)})`)
+        setError(t.valTimeSum || `Total time (${formatTime(totalMinutes)}) does not match sum of SE, ME, and MP times (${formatTime(se + me + mp)})`)
+        return
+      }
+
+      // Validation: Pilot Function
+      const pic = toMin(rawData.picTime)
+      const cop = toMin(rawData.copilotTime)
+      const dual = toMin(rawData.dualTime)
+      const instr = toMin(rawData.instructorTime)
+
+      if (pic + cop + dual + instr !== totalMinutes) {
+        setError(t.valPilotFunc || 'Sum of PIC, COP, DUAL, INSTR times must equal Total Time')
+        return
+      }
+
+      // Validation: Operational Conditions
+      const night = toMin(rawData.nightTime)
+      const ifr = toMin(rawData.ifrTime)
+
+      if (night > totalMinutes) {
+        setError(t.valNight || 'Night time cannot be greater than Total Time')
+        return
+      }
+      if (ifr > totalMinutes) {
+        setError(t.valIfr || 'IFR time cannot be greater than Total Time')
         return
       }
 
       const flightData = {
-        date: new Date(rawData.date),
+        date: flightDate,
         departurePlace: rawData.departurePlace.toUpperCase(),
         departureTime: rawData.departureTime,
         arrivalPlace: rawData.arrivalPlace.toUpperCase(),
@@ -192,15 +250,15 @@ export default function AddEntryModal({
         singlePilotSE: se,
         singlePilotME: me,
         multiPilot: mp,
-        nightTime: toMin(rawData.nightTime),
-        ifrTime: toMin(rawData.ifrTime),
-        picTime: toMin(rawData.picTime),
-        copilotTime: toMin(rawData.copilotTime),
-        dualTime: toMin(rawData.dualTime),
-        instructorTime: toMin(rawData.instructorTime),
+        nightTime: night,
+        ifrTime: ifr,
+        picTime: pic,
+        copilotTime: cop,
+        dualTime: dual,
+        instructorTime: instr,
         picName: isSelf ? 'SELF' : (rawData.picName || '').toUpperCase(),
-        landingsDay: parseInt(rawData.landingsDay || '0'),
-        landingsNight: parseInt(rawData.landingsNight || '0'),
+        landingsDay: ldgDay,
+        landingsNight: ldgNight,
         remarks: rawData.remarks,
         totalTime: totalMinutes
       }
@@ -220,6 +278,7 @@ export default function AddEntryModal({
   }
 
   if (!isOpen) {
+    if (hideTrigger) return null
     return (
       <button
         onClick={() => setInternalIsOpen(true)}
@@ -284,7 +343,7 @@ export default function AddEntryModal({
                     name="departurePlace"
                     value={departurePlace}
                     onChange={setDeparturePlace}
-                    suggestions={departurePlaces}
+                    suggestions={places}
                     label={t.place}
                     required
                     maxLength={4}
@@ -311,7 +370,7 @@ export default function AddEntryModal({
                     name="arrivalPlace"
                     value={arrivalPlace}
                     onChange={setArrivalPlace}
-                    suggestions={arrivalPlaces}
+                    suggestions={places}
                     label={t.place}
                     required
                     maxLength={4}
@@ -443,7 +502,7 @@ export default function AddEntryModal({
                           }}
                           className="text-[10px] text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer"
                         >
-                          Fill
+                          {t.fill}
                         </button>
                       )}
                     </div>
@@ -470,8 +529,24 @@ export default function AddEntryModal({
                   { name: 'ifrTime', label: 'IFR' },
                   { name: 'nightTime', label: t.night },
                 ].map((field) => (
-                  <div key={field.name} className="space-y-1">
-                    <label className="block text-xs font-medium text-gray-900 dark:text-white uppercase">{field.label}</label>
+                  <div key={field.name} className="space-y-1 relative">
+                    <div className="flex justify-between items-center">
+                      <label className="block text-xs font-medium text-gray-900 dark:text-white uppercase">{field.label}</label>
+                      {calculatedFlightTime && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const input = document.querySelector(`input[name="${field.name}"]`) as HTMLInputElement
+                            if (input) {
+                              input.value = calculatedFlightTime
+                            }
+                          }}
+                          className="text-[10px] text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer"
+                        >
+                          {t.fill}
+                        </button>
+                      )}
+                    </div>
                     <input 
                       name={field.name} 
                       placeholder="00:00" 
@@ -497,8 +572,24 @@ export default function AddEntryModal({
                   { name: 'dualTime', label: 'DUAL' },
                   { name: 'instructorTime', label: 'INSTR' },
                 ].map((field) => (
-                  <div key={field.name} className="space-y-1">
-                    <label className="block text-xs font-medium text-gray-900 dark:text-white uppercase">{field.label}</label>
+                  <div key={field.name} className="space-y-1 relative">
+                    <div className="flex justify-between items-center">
+                      <label className="block text-xs font-medium text-gray-900 dark:text-white uppercase">{field.label}</label>
+                      {calculatedFlightTime && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const input = document.querySelector(`input[name="${field.name}"]`) as HTMLInputElement
+                            if (input) {
+                              input.value = calculatedFlightTime
+                            }
+                          }}
+                          className="text-[10px] text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer"
+                        >
+                          {t.fill}
+                        </button>
+                      )}
+                    </div>
                     <input 
                       name={field.name} 
                       placeholder="00:00" 
