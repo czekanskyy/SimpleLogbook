@@ -4,6 +4,8 @@ import { Flight } from '@prisma/client'
 import { formatTime } from '@/app/lib/utils'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useUI } from '@/app/context/UIContext'
+import { Edit2, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 
 interface LogbookTableProps {
   flights: Flight[]
@@ -13,6 +15,8 @@ interface LogbookTableProps {
   previousTotals: any
   lifetimeTotals: any
   rowsPerPage: number
+  onEdit?: (flight: Flight) => void
+  onDelete?: (id: string) => void
 }
 
 export default function LogbookTable({ 
@@ -22,11 +26,23 @@ export default function LogbookTable({
   pageTotals, 
   previousTotals, 
   lifetimeTotals,
-  rowsPerPage
+  rowsPerPage,
+  onEdit,
+  onDelete
 }: LogbookTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { t } = useUI()
+  const [jumpPage, setJumpPage] = useState('')
+
+  const handleJumpPage = (e: React.FormEvent) => {
+    e.preventDefault()
+    const p = parseInt(jumpPage)
+    if (p >= 1 && p <= totalPages) {
+      handlePageChange(p)
+      setJumpPage('')
+    }
+  }
 
   // Fill up to rowsPerPage rows
   const filledFlights = [...flights]
@@ -48,7 +64,7 @@ export default function LogbookTable({
           <div key={flight.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm space-y-3">
             <div className="flex justify-between items-start">
               <div>
-                <div className="text-sm font-bold text-gray-900 dark:text-white">{flight.date ? new Date(flight.date).toLocaleDateString('en-GB') : '-'}</div>
+                <div className="text-sm font-bold text-gray-900 dark:text-white">{flight.date ? new Date(flight.date).toLocaleDateString('en-CA').replace(/-/g, '.') : '-'}</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">{flight.aircraftModel} ({flight.aircraftReg})</div>
               </div>
               <div className="text-right">
@@ -88,6 +104,21 @@ export default function LogbookTable({
                 "{flight.remarks}"
               </div>
             )}
+            
+            <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+              <button 
+                onClick={() => onEdit?.(flight)}
+                className="p-1 text-blue-600 hover:bg-blue-50 rounded dark:text-blue-400 dark:hover:bg-gray-700"
+              >
+                <Edit2 size={16} />
+              </button>
+              <button 
+                onClick={() => onDelete?.(flight.id)}
+                className="p-1 text-red-600 hover:bg-red-50 rounded dark:text-red-400 dark:hover:bg-gray-700"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -108,14 +139,15 @@ export default function LogbookTable({
               <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" colSpan={2}>{t.operationalCondition}</th>
               <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" colSpan={4}>{t.pilotFunctionTime}</th>
               <th className="p-4 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" rowSpan={3}>{t.remarks}</th>
+              <th className="p-4 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" rowSpan={3}>Actions</th>
             </tr>
             <tr>
               <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.place}</th>
               <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.time}</th>
               <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.place}</th>
               <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.time}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.model}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.reg}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[80px]" rowSpan={2}>{t.model}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[80px]" rowSpan={2}>{t.reg}</th>
               <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" colSpan={2}>{t.singlePilot}</th>
               <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.multiPilot}</th>
               <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.day}</th>
@@ -135,7 +167,7 @@ export default function LogbookTable({
           <tbody>
             {filledFlights.map((flight, index) => (
               <tr key={flight.id} className={`border-b border-gray-200 dark:border-gray-700 h-10 ${index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900'} hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors`}>
-                <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-center">{flight.date ? new Date(flight.date).toLocaleDateString('en-GB') : ''}</td>
+                <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-center">{flight.date ? new Date(flight.date).toLocaleDateString('en-CA').replace(/-/g, '.') : ''}</td>
                 <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-center">{flight.departurePlace}</td>
                 <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-center">{flight.departureTime}</td>
                 <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-center">{flight.arrivalPlace}</td>
@@ -155,7 +187,27 @@ export default function LogbookTable({
                 <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-right">{formatTime(flight.copilotTime)}</td>
                 <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-right">{formatTime(flight.dualTime)}</td>
                 <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-right">{formatTime(flight.instructorTime)}</td>
-                <td className="p-2 text-gray-500 dark:text-gray-400 truncate max-w-[150px]">{flight.remarks}</td>
+                <td className="p-2 text-gray-500 dark:text-gray-400 truncate max-w-[150px] border-r border-gray-200 dark:border-gray-700">{flight.remarks}</td>
+                <td className="p-2 text-center">
+                  {!flight.id.startsWith('empty') && (
+                    <div className="flex items-center justify-center gap-2">
+                      <button 
+                        onClick={() => onEdit?.(flight)}
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                        title={t.editFlight || 'Edit'}
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button 
+                        onClick={() => onDelete?.(flight.id)}
+                        className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                        title="Delete"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
+                </td>
               </tr>
             ))}
             
@@ -175,6 +227,7 @@ export default function LogbookTable({
               <td className="p-2 border-r border-gray-300 dark:border-gray-600 text-right">{formatTime(pageTotals.copilotTime)}</td>
               <td className="p-2 border-r border-gray-300 dark:border-gray-600 text-right">{formatTime(pageTotals.dualTime)}</td>
               <td className="p-2 border-r border-gray-300 dark:border-gray-600 text-right">{formatTime(pageTotals.instructorTime)}</td>
+              <td className="p-2 border-r border-gray-300 dark:border-gray-600"></td>
               <td className="p-2"></td>
             </tr>
 
@@ -194,6 +247,7 @@ export default function LogbookTable({
               <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-right">{formatTime(previousTotals.copilotTime)}</td>
               <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-right">{formatTime(previousTotals.dualTime)}</td>
               <td className="p-2 border-r border-gray-200 dark:border-gray-700 text-right">{formatTime(previousTotals.instructorTime)}</td>
+              <td className="p-2 border-r border-gray-200 dark:border-gray-700"></td>
               <td className="p-2"></td>
             </tr>
 
@@ -213,6 +267,7 @@ export default function LogbookTable({
               <td className="p-2 border-r border-gray-400 dark:border-gray-600 text-right">{formatTime(previousTotals.copilotTime + pageTotals.copilotTime)}</td>
               <td className="p-2 border-r border-gray-400 dark:border-gray-600 text-right">{formatTime(previousTotals.dualTime + pageTotals.dualTime)}</td>
               <td className="p-2 border-r border-gray-400 dark:border-gray-600 text-right">{formatTime(previousTotals.instructorTime + pageTotals.instructorTime)}</td>
+              <td className="p-2 border-r border-gray-400 dark:border-gray-600"></td>
               <td className="p-2"></td>
             </tr>
           </tbody>
@@ -228,6 +283,20 @@ export default function LogbookTable({
           {t.previous}
         </button>
         <span className="text-sm text-gray-700 dark:text-gray-300">{t.page} {page} {t.of} {totalPages || 1}</span>
+        
+        <form onSubmit={handleJumpPage} className="flex items-center gap-2">
+          <input 
+            type="number" 
+            min="1" 
+            max={totalPages} 
+            value={jumpPage}
+            onChange={(e) => setJumpPage(e.target.value)}
+            placeholder="#"
+            className="w-12 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white"
+          />
+          <button type="submit" className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600">Go</button>
+        </form>
+
         <button 
           disabled={page >= totalPages}
           onClick={() => handlePageChange(page + 1)}

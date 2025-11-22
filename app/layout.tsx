@@ -20,11 +20,6 @@ export default async function RootLayout({
   const session = await auth();
   const settings = await getSettings();
   
-  const initialSettings = {
-    language: (settings as any).language || 'en',
-    rowsPerPage: settings.rowsPerPage
-  };
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -46,7 +41,7 @@ export default async function RootLayout({
         />
       </head>
       <body className={inter.className} suppressHydrationWarning>
-        <UIProvider initialSettings={initialSettings} user={session?.user}>
+        <UIProvider initialSettings={settings as any} user={session?.user}>
           {children}
         </UIProvider>
       </body>

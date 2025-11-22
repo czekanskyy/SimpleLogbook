@@ -1,14 +1,27 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createFlight, getUniqueAircraftRegistrations, getUniqueAircraftModels, getUniquePicNames, getAircraftByRegistration, getUniqueDeparturePlaces, getUniqueArrivalPlaces } from '@/app/lib/actions'
-import { parseTime } from '@/app/lib/utils'
+import { createFlight, updateFlight, getUniqueAircraftRegistrations, getUniqueAircraftModels, getUniquePicNames, getAircraftByRegistration, getUniqueDeparturePlaces, getUniqueArrivalPlaces } from '@/app/lib/actions'
+import { parseTime, formatTime } from '@/app/lib/utils'
 import { Plus, X, Plane, Clock, Settings, Timer } from 'lucide-react'
 import { useUI } from '@/app/context/UIContext'
 import AutocompleteInput from './AutocompleteInput'
+import { Flight } from '@prisma/client'
 
-export default function AddEntryModal() {
-  const [isOpen, setIsOpen] = useState(false)
+interface AddEntryModalProps {
+  isOpen?: boolean
+  onClose?: () => void
+  initialData?: Flight | null
+}
+
+export default function AddEntryModal({ 
+  isOpen: externalIsOpen, 
+  onClose, 
+  initialData 
+}: AddEntryModalProps) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false)
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
+  
   const [error, setError] = useState('')
   const [isSelf, setIsSelf] = useState(false)
   const [picName, setPicName] = useState('')
@@ -40,6 +53,39 @@ export default function AddEntryModal() {
       document.body.style.overflow = 'unset'
     }
   }, [isOpen])
+  
+  // Initialize form with initialData if provided
+  useEffect(() => {
+    if (initialData) {
+      setDepartureTime(initialData.departureTime)
+      setArrivalTime(initialData.arrivalTime)
+      setAircraftModel(initialData.aircraftModel)
+      setAircraftReg(initialData.aircraftReg)
+      setDeparturePlace(initialData.departurePlace)
+      setArrivalPlace(initialData.arrivalPlace)
+      setPicName(initialData.picName === 'SELF' ? 'SELF' : initialData.picName)
+      setIsSelf(initialData.picName === 'SELF')
+    }
+  }, [initialData])
+
+  const handleClose = () => {
+    if (onClose) {
+      onClose()
+    } else {
+      setInternalIsOpen(false)
+    }
+    // Reset form state
+    setError('')
+    setIsSelf(false)
+    setPicName('')
+    setAircraftModel('')
+    setAircraftReg('')
+    setDeparturePlace('')
+    setArrivalPlace('')
+    setDepartureTime('')
+    setArrivalTime('')
+    setCalculatedFlightTime('')
+  }
   
   // Calculate flight time whenever departure or arrival time changes
   useEffect(() => {
@@ -119,6 +165,22 @@ export default function AddEntryModal() {
     const toMin = (str: string) => parseTime(str)
     
     try {
+      // Calculate total minutes from calculatedFlightTime
+      let totalMinutes = 0
+      if (calculatedFlightTime) {
+        totalMinutes = parseTime(calculatedFlightTime)
+      }
+      
+      // Validation: Check if category times match total time
+      const se = toMin(rawData.singlePilotSE)
+      const me = toMin(rawData.singlePilotME)
+      const mp = toMin(rawData.multiPilot)
+      
+      if (se + me + mp !== totalMinutes) {
+        setError(`Total time (${formatTime(totalMinutes)}) does not match sum of SE, ME, and MP times (${formatTime(se + me + mp)})`)
+        return
+      }
+
       const flightData = {
         date: new Date(rawData.date),
         departurePlace: rawData.departurePlace.toUpperCase(),
@@ -127,9 +189,9 @@ export default function AddEntryModal() {
         arrivalTime: rawData.arrivalTime,
         aircraftModel: rawData.aircraftModel.toUpperCase(),
         aircraftReg: rawData.aircraftReg.toUpperCase(),
-        singlePilotSE: toMin(rawData.singlePilotSE),
-        singlePilotME: toMin(rawData.singlePilotME),
-        multiPilot: toMin(rawData.multiPilot),
+        singlePilotSE: se,
+        singlePilotME: me,
+        multiPilot: mp,
         nightTime: toMin(rawData.nightTime),
         ifrTime: toMin(rawData.ifrTime),
         picTime: toMin(rawData.picTime),
@@ -139,20 +201,17 @@ export default function AddEntryModal() {
         picName: isSelf ? 'SELF' : (rawData.picName || '').toUpperCase(),
         landingsDay: parseInt(rawData.landingsDay || '0'),
         landingsNight: parseInt(rawData.landingsNight || '0'),
-        remarks: rawData.remarks
+        remarks: rawData.remarks,
+        totalTime: totalMinutes
       }
       
-      await createFlight(flightData)
-      setIsOpen(false)
-      setIsSelf(false)
-      setPicName('')
-      setAircraftModel('')
-      setAircraftReg('')
-      setDeparturePlace('')
-      setArrivalPlace('')
-      setDepartureTime('')
-      setArrivalTime('')
-      setCalculatedFlightTime('')
+      if (initialData?.id) {
+        await updateFlight(initialData.id, flightData)
+      } else {
+        await createFlight(flightData)
+      }
+      
+      handleClose()
       form.reset()
     } catch (err) {
       console.error(err)
@@ -163,7 +222,7 @@ export default function AddEntryModal() {
   if (!isOpen) {
     return (
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => setInternalIsOpen(true)}
         className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm shadow-sm focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800"
         title={t.addFlight}
       >
@@ -177,8 +236,8 @@ export default function AddEntryModal() {
     <div className="fixed inset-0 bg-gray-900/50 dark:bg-gray-900/80 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col transition-all border border-gray-200 dark:border-gray-700">
         <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700 rounded-t-lg flex-shrink-0">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t.addFlight}</h2>
-          <button onClick={() => setIsOpen(false)} className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{initialData ? t.editFlight : t.addFlight}</h2>
+          <button onClick={handleClose} className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white">
             <X size={24} />
           </button>
         </div>
@@ -199,7 +258,13 @@ export default function AddEntryModal() {
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-1">
                 <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">{t.date}</label>
-                <input type="date" name="date" required className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                <input 
+                  type="date" 
+                  name="date" 
+                  required 
+                  defaultValue={initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : ''}
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                />
               </div>
             </div>
           </div>
@@ -363,9 +428,32 @@ export default function AddEntryModal() {
                   { name: 'singlePilotME', label: 'ME' },
                   { name: 'multiPilot', label: 'MP' },
                 ].map((field) => (
-                  <div key={field.name} className="space-y-1">
-                    <label className="block text-xs font-medium text-gray-900 dark:text-white uppercase">{field.label}</label>
-                    <input name={field.name} placeholder="00:00" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                  <div key={field.name} className="space-y-1 relative">
+                    <div className="flex justify-between items-center">
+                      <label className="block text-xs font-medium text-gray-900 dark:text-white uppercase">{field.label}</label>
+                      {calculatedFlightTime && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const input = document.querySelector(`input[name="${field.name}"]`) as HTMLInputElement
+                            if (input) {
+                              input.value = calculatedFlightTime
+                              // Trigger change event if needed, but for uncontrolled input setting value is enough for submission
+                            }
+                          }}
+                          className="text-[10px] text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer"
+                        >
+                          Fill
+                        </button>
+                      )}
+                    </div>
+                    <input 
+                      name={field.name} 
+                      placeholder="00:00" 
+                      pattern="[0-9]{1,2}:[0-9]{2}"
+                      defaultValue={initialData ? formatTime(initialData[field.name as keyof Flight] as number) : ''}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                    />
                   </div>
                 ))}
               </div>
@@ -384,7 +472,13 @@ export default function AddEntryModal() {
                 ].map((field) => (
                   <div key={field.name} className="space-y-1">
                     <label className="block text-xs font-medium text-gray-900 dark:text-white uppercase">{field.label}</label>
-                    <input name={field.name} placeholder="00:00" pattern="[0-9]{2}:[0-9]{2}" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                    <input 
+                      name={field.name} 
+                      placeholder="00:00" 
+                      pattern="[0-9]{1,2}:[0-9]{2}" 
+                      defaultValue={initialData ? formatTime(initialData[field.name as keyof Flight] as number) : ''}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                    />
                   </div>
                 ))}
               </div>
@@ -405,7 +499,13 @@ export default function AddEntryModal() {
                 ].map((field) => (
                   <div key={field.name} className="space-y-1">
                     <label className="block text-xs font-medium text-gray-900 dark:text-white uppercase">{field.label}</label>
-                    <input name={field.name} placeholder="00:00" pattern="[0-9]{2}:[0-9]{2}" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                    <input 
+                      name={field.name} 
+                      placeholder="00:00" 
+                      pattern="[0-9]{1,2}:[0-9]{2}" 
+                      defaultValue={initialData ? formatTime(initialData[field.name as keyof Flight] as number) : ''}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                    />
                   </div>
                 ))}
               </div>
@@ -421,21 +521,37 @@ export default function AddEntryModal() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-900 dark:text-white">{t.landings} ({t.day})</label>
-                <input type="number" name="landingsDay" min="0" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                <input 
+                  type="number" 
+                  name="landingsDay" 
+                  min="0" 
+                  defaultValue={initialData?.landingsDay || 0}
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                />
               </div>
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-900 dark:text-white">{t.landings} ({t.night})</label>
-                <input type="number" name="landingsNight" min="0" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                <input 
+                  type="number" 
+                  name="landingsNight" 
+                  min="0" 
+                  defaultValue={initialData?.landingsNight || 0}
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                />
               </div>
               <div className="md:col-span-2 space-y-1">
                 <label className="block text-sm font-medium text-gray-900 dark:text-white">{t.remarks}</label>
-                <input name="remarks" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" />
+                <input 
+                  name="remarks" 
+                  defaultValue={initialData?.remarks || ''}
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                />
               </div>
             </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
-            <button type="button" onClick={() => setIsOpen(false)} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+            <button type="button" onClick={handleClose} className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
               {t.cancel}
             </button>
             <button type="submit" className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">

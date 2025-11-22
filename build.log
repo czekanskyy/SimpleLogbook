@@ -1,0 +1,141 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2.27kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:18-alpine
+#2 DONE 0.2s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 120B done
+#3 DONE 0.0s
+
+#4 [base 1/1] FROM docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e
+#4 resolve docker.io/library/node:18-alpine@sha256:8d6421d663b4c28fd3ebc498332f249011d118945588d0a35cb9bc4b8ca09d9e 0.0s done
+#4 DONE 0.0s
+
+#5 [builder 1/7] WORKDIR /app
+#5 CACHED
+
+#6 [runner 2/9] RUN addgroup --system --gid 1001 nodejs
+#6 CACHED
+
+#7 [runner 3/9] RUN adduser --system --uid 1001 nextjs
+#7 CACHED
+
+#8 [internal] load build context
+#8 transferring context: 3.35kB 0.0s done
+#8 DONE 0.0s
+
+#9 [deps 2/5] WORKDIR /app
+#9 CACHED
+
+#10 [deps 5/5] RUN   if [ -f yarn.lock ]; then yarn --frozen-lockfile;   elif [ -f package-lock.json ]; then npm ci;   elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile;   else echo "Lockfile not found." && exit 1;   fi
+#10 CACHED
+
+#11 [deps 1/5] RUN apk add --no-cache libc6-compat
+#11 CACHED
+
+#12 [deps 3/5] COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+#12 CACHED
+
+#13 [deps 4/5] RUN ls -la
+#13 CACHED
+
+#14 [builder 2/7] COPY --from=deps /app/node_modules ./node_modules
+#14 CACHED
+
+#15 [builder 3/7] COPY . .
+#15 DONE 0.1s
+
+#16 [builder 4/7] RUN ls -la
+#16 0.242 total 444
+#16 0.242 drwxr-xr-x    1 root     root          4096 Nov 22 00:59 .
+#16 0.242 drwxr-xr-x    1 root     root          4096 Nov 22 00:59 ..
+#16 0.242 -rwxr-xr-x    1 root     root           300 Nov 21 21:24 .env
+#16 0.242 -rwxr-xr-x    1 root     root           321 Nov 21 21:24 .env.example
+#16 0.242 -rwxr-xr-x    1 root     root           650 Nov 21 18:16 .gitignore
+#16 0.242 -rwxr-xr-x    1 root     root          3208 Nov 21 23:50 DEPLOYMENT.md
+#16 0.242 drwxr-xr-x   11 root     root          4096 Nov 21 23:42 app
+#16 0.242 -rwxr-xr-x    1 root     root           650 Nov 21 19:28 auth.config.ts
+#16 0.242 -rwxr-xr-x    1 root     root          1237 Nov 21 20:19 auth.ts
+#16 0.242 -rwxr-xr-x    1 root     root           255 Nov 22 00:59 build.log
+#16 0.242 -rwxr-xr-x    1 root     root          1073 Nov 21 21:12 create-admin.js
+#16 0.242 -rwxr-xr-x    1 root     root           600 Nov 21 23:46 docker-compose.yml
+#16 0.242 -rwxr-xr-x    1 root     root           483 Nov 21 18:16 eslint.config.mjs
+#16 0.242 -rwxr-xr-x    1 root     root          1453 Nov 21 21:23 middleware.ts
+#16 0.242 -rwxr-xr-x    1 root     root           257 Nov 21 18:44 next-env.d.ts
+#16 0.242 -rwxr-xr-x    1 root     root           136 Nov 21 18:44 next.config.ts
+#16 0.242 drwxr-xr-x  369 root     root         16384 Nov 22 00:32 node_modules
+#16 0.242 -rwxr-xr-x    1 root     root        334011 Nov 22 00:43 package-lock.json
+#16 0.242 -rwxr-xr-x    1 root     root          1128 Nov 21 18:55 package.json
+#16 0.242 -rwxr-xr-x    1 root     root           101 Nov 21 18:16 postcss.config.mjs
+#16 0.242 drwxr-xr-x    4 root     root          4096 Nov 21 18:22 prisma
+#16 0.242 -rwxr-xr-x    1 root     root           256 Nov 21 18:16 prisma.config.ts
+#16 0.242 drwxr-xr-x    2 root     root          4096 Nov 21 18:16 public
+#16 0.242 drwxr-xr-x    2 root     root          4096 Nov 21 22:54 scripts
+#16 0.242 -rwxr-xr-x    1 root     root           341 Nov 21 18:16 tailwind.config.ts
+#16 0.242 -rwxr-xr-x    1 root     root           700 Nov 21 18:16 tsconfig.json
+#16 0.242 drwxr-xr-x    2 root     root          4096 Nov 21 18:56 types
+#16 DONE 0.3s
+
+#17 [builder 5/7] RUN ls -la prisma
+#17 0.330 total 20
+#17 0.330 drwxr-xr-x    4 root     root          4096 Nov 21 18:22 .
+#17 0.330 drwxr-xr-x    1 root     root          4096 Nov 22 00:59 ..
+#17 0.330 drwxr-xr-x    5 root     root          4096 Nov 21 18:43 migrations
+#17 0.330 drwxr-xr-x    2 root     root          4096 Nov 21 23:21 prisma
+#17 0.330 -rwxr-xr-x    1 root     root          2759 Nov 21 21:34 schema.prisma
+#17 DONE 0.4s
+
+#18 [builder 6/7] RUN npx prisma generate
+#18 2.356 Loaded Prisma config from prisma.config.ts.
+#18 2.356 
+#18 2.430 Prisma config detected, skipping environment variable loading.
+#18 2.431 Prisma schema loaded from prisma/schema.prisma
+#18 3.567 
+#18 3.567 Ôťö Generated Prisma Client (v6.19.0) to ./node_modules/@prisma/client in 310ms
+#18 3.567 
+#18 3.567 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#18 3.567 
+#18 3.567 Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+#18 3.567 
+#18 3.619 npm notice
+#18 3.619 npm notice New major version of npm available! 10.8.2 -> 11.6.3
+#18 3.619 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.3
+#18 3.619 npm notice To update run: npm install -g npm@11.6.3
+#18 3.619 npm notice
+#18 DONE 3.7s
+
+#19 [builder 7/7] RUN npm run build
+#19 0.554 
+#19 0.554 > logbook@0.1.0 build
+#19 0.554 > next build
+#19 0.554 
+#19 0.764 You are using Node.js 18.20.8. For Next.js, Node.js version ">=20.9.0" is required.
+#19 ERROR: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1
+------
+ > [builder 7/7] RUN npm run build:
+0.554 
+0.554 > logbook@0.1.0 build
+0.554 > next build
+0.554 
+0.764 You are using Node.js 18.20.8. For Next.js, Node.js version ">=20.9.0" is required.
+------
+
+ 5 warnings found (use docker --debug to expand):
+ - LegacyKeyValueFormat: "ENV key=value" should be used instead of legacy "ENV key value" format (line 28)
+ - LegacyKeyValueFormat: "ENV key=value" should be used instead of legacy "ENV key value" format (line 42)
+ - LegacyKeyValueFormat: "ENV key=value" should be used instead of legacy "ENV key value" format (line 44)
+ - LegacyKeyValueFormat: "ENV key=value" should be used instead of legacy "ENV key value" format (line 65)
+ - LegacyKeyValueFormat: "ENV key=value" should be used instead of legacy "ENV key value" format (line 67)
+Dockerfile:36
+--------------------
+  34 |     RUN npx prisma generate
+  35 |     
+  36 | >>> RUN npm run build
+  37 |     
+  38 |     # Production image, copy all the files and run next
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1

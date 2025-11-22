@@ -36,8 +36,7 @@ export function UIProvider({ children, initialSettings, user }: UIProviderProps)
     userId: 'guest',
     language: 'pl',
     rowsPerPage: 14,
-    createdAt: new Date(),
-    updatedAt: new Date()
+
   }
 
   const [settings, setSettings] = useState<Settings>(initialSettings || defaultSettings)

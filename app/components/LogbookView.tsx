@@ -8,7 +8,9 @@ import CSVImport from '@/app/components/CSVImport'
 import SettingsModal from '@/app/components/SettingsModal'
 import HelpModal from '@/app/components/HelpModal'
 import ProfileModal from '@/app/components/ProfileModal'
+import { deleteFlight } from '@/app/lib/actions'
 import { useUI } from '@/app/context/UIContext'
+import { Download } from 'lucide-react'
 
 interface LogbookViewProps {
   flights: Flight[]
@@ -31,9 +33,20 @@ export default function LogbookView({
   rowsPerPage,
   year
 }: LogbookViewProps) {
-  const { user } = useUI()
+  const { user, t } = useUI()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [editingFlight, setEditingFlight] = useState<Flight | null>(null)
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Are you sure you want to delete this flight?')) {
+      await deleteFlight(id)
+    }
+  }
+
+  const handleExport = () => {
+    window.location.href = '/api/export'
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-8 transition-colors duration-300">
@@ -48,6 +61,14 @@ export default function LogbookView({
           
           <div className="flex items-center gap-4">
             <AddEntryModal />
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium text-sm shadow-sm focus:ring-4 focus:ring-green-300 dark:focus:ring-green-800"
+              title={t.importCsv} // Reusing importCsv label or adding new one? Let's use a generic one or add exportCsv
+            >
+              <Download size={16} />
+              <span className="hidden sm:inline">Export CSV</span>
+            </button>
             <CSVImport />
             <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2"></div>
             <HelpModal />
@@ -108,6 +129,8 @@ export default function LogbookView({
             previousTotals={previousTotals}
             lifetimeTotals={lifetimeTotals}
             rowsPerPage={rowsPerPage}
+            onEdit={setEditingFlight}
+            onDelete={handleDelete}
           />
         </div>
       </div>
@@ -120,6 +143,12 @@ export default function LogbookView({
       <ProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
+      />
+      
+      <AddEntryModal
+        isOpen={!!editingFlight}
+        onClose={() => setEditingFlight(null)}
+        initialData={editingFlight}
       />
     </main>
   )

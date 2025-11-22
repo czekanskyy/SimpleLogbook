@@ -117,6 +117,16 @@ export async function createFlight(data: FlightFormData) {
   return flight
 }
 
+export async function updateFlight(id: string, data: FlightFormData) {
+  const flight = await prisma.flight.update({
+    where: { id },
+    data
+  })
+  
+  revalidatePath('/')
+  return flight
+}
+
 export async function deleteFlight(id: string) {
   await prisma.flight.delete({ where: { id } })
   revalidatePath('/')
