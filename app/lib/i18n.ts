@@ -74,14 +74,8 @@ export const translations = {
     model: 'Model',
     registration: 'Rejestracja',
     
-    // Theme
-    darkMode: 'Ciemny Motyw',
-    lightMode: 'Jasny Motyw',
-    language: 'Język',
-    appearance: 'Wygląd',
-    toggle: 'Przełącz',
-    change: 'Zmień',
-    
+    printLogbook: 'Drukuj Logbook',
+
     // Help
     help: 'Pomoc',
     helpTitle: 'Pomoc i Instrukcje',
@@ -210,6 +204,8 @@ export const translations = {
     picNameLabel: 'PIC Surname',
     model: 'Model',
     registration: 'Registration',
+    
+    printLogbook: 'Print Logbook',
     
     // Theme
     darkMode: 'Dark Mode',

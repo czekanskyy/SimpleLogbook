@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Info, BookOpen, FileText, Plane, Clock, Upload, Lightbulb } from 'lucide-react'
+import { X, Info, BookOpen, FileText, Plane, Clock, Upload, Lightbulb, HelpCircle } from 'lucide-react'
 import { useUI } from '@/app/context/UIContext'
 
 export default function HelpModal() {
@@ -10,14 +10,13 @@ export default function HelpModal() {
 
   return (
     <>
-      {/* Info Button */}
+      {/* Trigger Button (Hidden by default, triggered via ID) */}
       <button
+        id="help-modal-trigger"
         onClick={() => setIsOpen(true)}
-        className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-200 flex items-center gap-2"
-        title={t.help}
+        className="hidden"
       >
-        <Info size={20} />
-        <span className="hidden sm:inline">{t.help}</span>
+        Open Help
       </button>
 
       {/* Modal */}
@@ -187,7 +186,7 @@ export default function HelpModal() {
                   {t.helpTips}
                 </h3>
                 <div className="text-gray-700 dark:text-gray-300 space-y-1">
-                  {t.helpTipsContent.split('\\n').map((tip, index) => (
+                  {t.helpTipsContent.split('\\n').map((tip: string, index: number) => (
                     <p key={index} className="leading-relaxed">{tip}</p>
                   ))}
                 </div>

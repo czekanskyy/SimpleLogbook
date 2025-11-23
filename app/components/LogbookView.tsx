@@ -10,7 +10,7 @@ import HelpModal from '@/app/components/HelpModal'
 import ProfileModal from '@/app/components/ProfileModal'
 import { deleteFlight } from '@/app/lib/actions'
 import { useUI } from '@/app/context/UIContext'
-import { Download, Plus } from 'lucide-react'
+import { Download, Plus, Printer, HelpCircle } from 'lucide-react'
 
 interface LogbookViewProps {
   flights: Flight[]
@@ -49,6 +49,13 @@ export default function LogbookView({
     window.location.href = '/api/export'
   }
 
+  const handlePrint = () => {
+    const params = new URLSearchParams()
+    if (page) params.set('page', page.toString())
+    if (year) params.set('year', year.toString())
+    window.open(`/print?${params.toString()}`, '_blank')
+  }
+
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-8 transition-colors duration-300">
       <div className="w-full space-y-6">
@@ -79,7 +86,24 @@ export default function LogbookView({
               <span className="hidden sm:inline">{t.exportCsv}</span>
             </button>
             <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2"></div>
-            <HelpModal />
+            
+            <button
+              onClick={handlePrint}
+              className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline-none"
+              title={t.printLogbook || 'Print Logbook'}
+            >
+              <Printer size={24} />
+            </button>
+
+            <button
+              onClick={() => (document.getElementById('help-modal-trigger') as HTMLButtonElement)?.click()}
+              className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline-none"
+              title={t.help}
+            >
+              <HelpCircle size={24} />
+            </button>
+            <div className="hidden"><HelpModal /></div>
+
             <button
               onClick={() => setIsSettingsOpen(true)}
               className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline-none"
