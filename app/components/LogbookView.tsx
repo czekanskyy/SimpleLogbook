@@ -8,6 +8,7 @@ import CSVImport from '@/app/components/CSVImport'
 import SettingsModal from '@/app/components/SettingsModal'
 import HelpModal from '@/app/components/HelpModal'
 import ProfileModal from '@/app/components/ProfileModal'
+import DeleteConfirmationModal from '@/app/components/DeleteConfirmationModal'
 import { deleteFlight } from '@/app/lib/actions'
 import { useUI } from '@/app/context/UIContext'
 import { Download, Plus, Printer, HelpCircle } from 'lucide-react'
@@ -38,10 +39,16 @@ export default function LogbookView({
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [editingFlight, setEditingFlight] = useState<Flight | null>(null)
   const [isAddingFlight, setIsAddingFlight] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this flight?')) {
-      await deleteFlight(id)
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (deleteId) {
+      await deleteFlight(deleteId)
+      setDeleteId(null)
     }
   }
 
@@ -51,7 +58,6 @@ export default function LogbookView({
 
   const handlePrint = () => {
     const params = new URLSearchParams()
-    if (page) params.set('page', page.toString())
     if (year) params.set('year', year.toString())
     window.open(`/print?${params.toString()}`, '_blank')
   }
@@ -162,7 +168,7 @@ export default function LogbookView({
             lifetimeTotals={lifetimeTotals}
             rowsPerPage={rowsPerPage}
             onEdit={setEditingFlight}
-            onDelete={handleDelete}
+            onDelete={handleDeleteClick}
           />
         </div>
       </div>
@@ -185,6 +191,12 @@ export default function LogbookView({
         }}
         initialData={editingFlight}
         hideTrigger
+      />
+
+      <DeleteConfirmationModal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleConfirmDelete}
       />
     </main>
   )

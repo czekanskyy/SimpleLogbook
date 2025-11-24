@@ -13,7 +13,9 @@ export async function getFlights(page: number = 1, pageSize?: number, year?: num
     limit = settings.rowsPerPage
   }
   
-  const safeLimit = limit || 14
+  // If limit is -1, fetch all records (no take/skip)
+  const isAll = limit === -1
+  const safeLimit = isAll ? undefined : (limit || 14)
 
   const where: Prisma.FlightWhereInput = year ? {
     date: {
@@ -31,8 +33,10 @@ export async function getFlights(page: number = 1, pageSize?: number, year?: num
   const flights = await prisma.flight.findMany({
     where,
     orderBy,
-    take: safeLimit,
-    skip: (page - 1) * safeLimit,
+    ...(isAll ? {} : {
+      take: safeLimit,
+      skip: (page - 1) * (safeLimit as number),
+    })
   })
 
   const totalCount = await prisma.flight.count({ where })
@@ -55,7 +59,7 @@ export async function getFlights(page: number = 1, pageSize?: number, year?: num
   })
 
   let previousTotals = null
-  if (page > 1) {
+  if (page > 1 && !isAll && safeLimit) {
     const previousFlights = await prisma.flight.findMany({
       where,
       orderBy,
@@ -154,12 +158,12 @@ export async function getSettings() {
       data: { 
         userId: session.user.id,
         rowsPerPage: 14,
-        language: 'en'
+        language: 'pl'
       }
     })
   }
   
-  return { rowsPerPage: 14, language: 'en', id: 'default' }
+  return { rowsPerPage: 14, language: 'pl', id: 'default' }
 }
 
 export async function updateSettings(data: { rowsPerPage?: number; language?: string }) {
@@ -184,7 +188,7 @@ export async function updateSettings(data: { rowsPerPage?: number; language?: st
         data: {
           userId: session.user.id,
           rowsPerPage: data.rowsPerPage || 14,
-          language: data.language || 'en'
+          language: data.language || 'pl'
         }
       })
     }

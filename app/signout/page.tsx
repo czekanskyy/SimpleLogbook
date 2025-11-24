@@ -20,10 +20,10 @@ export default function SignOutPage() {
             </div>
             
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Sign Out
+              Wyloguj się
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to sign out?
+              Czy na pewno chcesz się wylogować?
             </p>
 
             <div className="space-y-3">
@@ -31,14 +31,14 @@ export default function SignOutPage() {
                 onClick={handleSignOut}
                 className="w-full bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 font-medium transition-colors"
               >
-                Yes, Sign Out
+                Tak, wyloguj
               </button>
               
               <Link
                 href="/"
                 className="block w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 font-medium transition-colors text-center"
               >
-                Cancel
+                Anuluj
               </Link>
             </div>
           </div>

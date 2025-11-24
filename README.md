@@ -9,19 +9,6 @@ A modern, EASA PART FCL.050 compliant pilot logbook application built with Next.
 
 ## Features
 
-- ✅ **PART FCL.050 Compliance** - Meets all EASA logbook requirements
-- ✅ **Secure Authentication** - User registration, login, and admin approval system
-- ✅ **Admin Panel** - Manage users, roles, and approvals
-- ✅ **Modern UI** - Beautiful, responsive design with dark mode
-- ✅ **Smart Autocomplete** - Type-ahead suggestions for airports, aircraft, and pilot names
-- ✅ **Auto-calculations** - Flight time calculated automatically from departure/arrival times
-- ✅ **CSV Import** - Bulk import flights from CSV files
-- ✅ **Comprehensive Help** - Built-in documentation for PART FCL.050 requirements
-- ✅ **Bilingual** - Full support for Polish and English
-- ✅ **Offline Ready** - SQLite database, works without internet connection
-- ✅ **Docker Support** - Ready for containerized deployment
-
-## Screenshots
 
 *Coming soon*
 

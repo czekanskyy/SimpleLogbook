@@ -50,4 +50,7 @@ next-env.d.ts
 *.sqlite3
 
 # test files
+# test files
 test_flights.csv
+*.csv
+

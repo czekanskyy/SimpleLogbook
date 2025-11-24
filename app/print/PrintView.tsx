@@ -6,12 +6,10 @@ import { useEffect } from 'react'
 
 interface PrintViewProps {
   flights: Flight[]
-  pageTotals: any
-  previousTotals: any
   lifetimeTotals: any
 }
 
-export default function PrintView({ flights, pageTotals, previousTotals, lifetimeTotals }: PrintViewProps) {
+export default function PrintView({ flights, lifetimeTotals }: PrintViewProps) {
   useEffect(() => {
     window.print()
   }, [])
@@ -131,43 +129,9 @@ export default function PrintView({ flights, pageTotals, previousTotals, lifetim
             </tr>
           ))}
 
-          {/* Totals */}
+
           <tr className="bg-gray-100 font-bold">
-            <td colSpan={7} className="text-left px-2">TOTAL THIS PAGE</td>
-            <td>{formatTime(pageTotals.singlePilotSE)}</td>
-            <td>{formatTime(pageTotals.singlePilotME)}</td>
-            <td>{formatTime(pageTotals.multiPilot)}</td>
-            <td>{formatTime(pageTotals.totalTime)}</td>
-            <td></td>
-            <td>{pageTotals.landingsDay}</td>
-            <td>{pageTotals.landingsNight}</td>
-            <td>{formatTime(pageTotals.nightTime)}</td>
-            <td>{formatTime(pageTotals.ifrTime)}</td>
-            <td>{formatTime(pageTotals.picTime)}</td>
-            <td>{formatTime(pageTotals.copilotTime)}</td>
-            <td>{formatTime(pageTotals.dualTime)}</td>
-            <td>{formatTime(pageTotals.instructorTime)}</td>
-            <td></td>
-          </tr>
-          <tr className="bg-gray-100 font-bold">
-            <td colSpan={7} className="text-left px-2">TOTAL FROM PREVIOUS PAGES</td>
-            <td>{formatTime(previousTotals.singlePilotSE)}</td>
-            <td>{formatTime(previousTotals.singlePilotME)}</td>
-            <td>{formatTime(previousTotals.multiPilot)}</td>
-            <td>{formatTime(previousTotals.totalTime)}</td>
-            <td></td>
-            <td>{previousTotals.landingsDay}</td>
-            <td>{previousTotals.landingsNight}</td>
-            <td>{formatTime(previousTotals.nightTime)}</td>
-            <td>{formatTime(previousTotals.ifrTime)}</td>
-            <td>{formatTime(previousTotals.picTime)}</td>
-            <td>{formatTime(previousTotals.copilotTime)}</td>
-            <td>{formatTime(previousTotals.dualTime)}</td>
-            <td>{formatTime(previousTotals.instructorTime)}</td>
-            <td></td>
-          </tr>
-          <tr className="bg-gray-100 font-bold">
-            <td colSpan={7} className="text-left px-2">TOTAL TIME</td>
+            <td colSpan={7} className="text-left px-2">TOTAL</td>
             <td>{formatTime(lifetimeTotals.singlePilotSE)}</td>
             <td>{formatTime(lifetimeTotals.singlePilotME)}</td>
             <td>{formatTime(lifetimeTotals.multiPilot)}</td>

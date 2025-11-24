@@ -10,10 +10,8 @@ export default async function PrintPage({
   const page = parseInt((params.page as string) || '1')
   const year = params.year ? parseInt(params.year as string) : undefined
   
-  const settings = await getSettings()
-  const rowsPerPage = settings.rowsPerPage
-
-  const { flights, previousTotals, lifetimeTotals } = await getFlights(page, rowsPerPage, year)
+  // Fetch ALL flights for printing (pageSize: -1)
+  const { flights, lifetimeTotals } = await getFlights(1, -1, year)
 
   // Calculate Page Totals
   const pageTotals = flights.reduce((acc, flight) => ({
@@ -38,8 +36,6 @@ export default async function PrintPage({
   return (
     <PrintView 
       flights={flights}
-      pageTotals={pageTotals}
-      previousTotals={previousTotals}
       lifetimeTotals={lifetimeTotals}
     />
   )

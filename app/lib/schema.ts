@@ -11,6 +11,7 @@ export const flightSchema = z.object({
   singlePilotSE: z.coerce.number().min(0).default(0),
   singlePilotME: z.coerce.number().min(0).default(0),
   multiPilot: z.coerce.number().min(0).default(0),
+  totalTime: z.coerce.number().min(0).default(0),
   picName: z.enum(["SKALSKI", "SINICA", "SELF"]),
   landingsDay: z.coerce.number().int().min(0).default(0),
   landingsNight: z.coerce.number().int().min(0).default(0),

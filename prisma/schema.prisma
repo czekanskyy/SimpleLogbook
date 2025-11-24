@@ -108,7 +108,7 @@ model Flight {
 model Settings {
   id          String  @id @default(cuid())
   rowsPerPage Int     @default(14)
-  language    String  @default("en")
+  language    String  @default("pl")
   
   userId      String? @unique
   user        User?   @relation(fields: [userId], references: [id])
