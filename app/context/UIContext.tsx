@@ -89,7 +89,7 @@ export function UIProvider({ children, initialSettings, user }: UIProviderProps)
     }
   }
 
-  const t = translations[language]
+  const t = translations[language] as typeof translations['pl']
 
   return (
     <UIContext.Provider value={{ language, setLanguage, theme, toggleTheme, t, user, settings }}>
