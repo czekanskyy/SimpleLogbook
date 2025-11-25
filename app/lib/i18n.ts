@@ -529,12 +529,12 @@ export const translations = {
     changelogVersion: 'Version',
     changelogReleased: 'Released',
     
-    // Version 0.2.0
-    v020_email: 'Added email notifications for new user registrations',
-    v020_help: 'Expanded help section with detailed CSV import guide',
-    v020_footer: 'Updated footer (dynamic year, corrected author info)',
-    v020_about: 'Added logo (favicon) and contact link in About section',
-    v020_fixes: 'Bug fixes and stability improvements',
+    // Version 1.0.5
+    v105_email: 'Added email notifications for new user registrations',
+    v105_help: 'Expanded help section with detailed CSV import guide',
+    v105_footer: 'Updated footer (dynamic year, corrected author info)',
+    v105_about: 'Added logo (favicon) and contact link in About section',
+    v105_fixes: 'Bug fixes and stability improvements',
 
     // Version 1.0.4
     changelogAdded: 'Added changelog feature',
