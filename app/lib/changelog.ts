@@ -6,6 +6,17 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '1.0.6',
+    date: '2025-11-25',
+    changes: [
+      'v106_mobileMenu',
+      'v106_flightCard',
+      'v106_pagination',
+      'v106_importButton',
+      'v106_fixes'
+    ]
+  },
+  {
     version: '1.0.5',
     date: '2025-11-25',
     changes: [

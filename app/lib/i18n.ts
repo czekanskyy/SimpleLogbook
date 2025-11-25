@@ -216,7 +216,7 @@ export const translations = {
         email: 'Kontakt: contact@czekanski.dev',
         github: 'GitHub: https://github.com/czekanskyy/SimpleLogbook',
         disclaimer: 'Wyłączenie odpowiedzialności: Ten program jest narzędziem pomocniczym. Oficjalna dokumentacja lotnicza powinna być prowadzona zgodnie z wymogami prawnymi właściwego nadzoru lotniczego. Autor nie ponosi odpowiedzialności za błędy w danych lub utratę danych.',
-        version: 'Wersja 1.0.4'
+        version: 'Wersja 1.0.6'
       }
     },
     footer: {
@@ -231,6 +231,13 @@ export const translations = {
     changelogVersion: 'Wersja',
     changelogReleased: 'Wydano',
     
+    // Version 1.0.6
+    v106_mobileMenu: 'Ulepszono menu mobilne (szersze, lepsze pozycjonowanie)',
+    v106_flightCard: 'Ulepszono widok karty lotu na urządzeniach mobilnych',
+    v106_pagination: 'Poprawiono układ paginacji na małych ekranach',
+    v106_importButton: 'Ujednolicono wygląd przycisku importu',
+    v106_fixes: 'Poprawki responsywności i drobne usprawnienia',
+
     // Version 1.0.5
     v105_email: 'Dodano powiadomienia email o rejestracji nowych użytkowników',
     v105_help: 'Rozbudowano sekcję pomocy o szczegółowy przewodnik importu CSV',
@@ -514,7 +521,7 @@ export const translations = {
         email: 'Contact: contact@czekanski.dev',
         github: 'GitHub: https://github.com/czekanskyy/SimpleLogbook',
         disclaimer: 'Disclaimer: This software is a helper tool. Official aviation documentation should be maintained according to legal requirements of the competent authority. The author is not responsible for data errors or data loss.',
-        version: 'Version 1.0.4'
+        version: 'Version 1.0.6'
       }
     },
     footer: {
@@ -529,6 +536,13 @@ export const translations = {
     changelogVersion: 'Version',
     changelogReleased: 'Released',
     
+    // Version 1.0.6
+    v106_mobileMenu: 'Improved mobile menu (wider, better positioning)',
+    v106_flightCard: 'Enhanced flight card view on mobile devices',
+    v106_pagination: 'Fixed pagination layout on small screens',
+    v106_importButton: 'Unified import button styling',
+    v106_fixes: 'Responsiveness fixes and minor improvements',
+
     // Version 1.0.5
     v105_email: 'Added email notifications for new user registrations',
     v105_help: 'Expanded help section with detailed CSV import guide',

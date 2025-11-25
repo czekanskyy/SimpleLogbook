@@ -144,19 +144,19 @@ export default function CSVImport() {
       <button 
         onClick={() => fileInputRef.current?.click()}
         disabled={status === 'parsing' || status === 'uploading'}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 font-medium text-sm
+        className={`w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 md:py-2 rounded-lg transition-all duration-200 font-semibold text-sm shadow-sm whitespace-nowrap
           ${status === 'parsing' || status === 'uploading'
             ? 'bg-blue-600/50 text-white cursor-not-allowed' 
-            : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800'
+            : 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800'
           }`}
         title={t.importCsv}
       >
         {status === 'parsing' || status === 'uploading' ? (
-          <Loader2 size={16} className="animate-spin" />
+          <Loader2 size={18} className="animate-spin" />
         ) : (
-          <Upload size={16} />
+          <Upload size={18} />
         )}
-        <span className="hidden sm:inline">
+        <span>
           {status === 'parsing' || status === 'uploading' ? 'Processing...' : t.importCsv}
         </span>
       </button>

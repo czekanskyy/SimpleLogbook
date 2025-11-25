@@ -4,7 +4,7 @@ import { Flight } from '@prisma/client'
 import { formatTime } from '@/app/lib/utils'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useUI } from '@/app/context/UIContext'
-import { Edit2, Trash2 } from 'lucide-react'
+import { Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 
 interface LogbookTableProps {
@@ -17,6 +17,110 @@ interface LogbookTableProps {
   rowsPerPage: number
   onEdit?: (flight: Flight) => void
   onDelete?: (id: string) => void
+}
+
+function MobileFlightCard({ flight, onEdit, onDelete, t }: { flight: Flight, onEdit?: (f: Flight) => void, onDelete?: (id: string) => void, t: any }) {
+  const [showDetails, setShowDetails] = useState(false)
+
+  return (
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm space-y-3">
+      <div className="flex justify-between items-start">
+        <div>
+          <div className="text-sm font-bold text-gray-900 dark:text-white">{flight.date ? new Date(flight.date).toLocaleDateString('en-CA').replace(/-/g, '.') : '-'}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">{flight.aircraftModel} ({flight.aircraftReg})</div>
+        </div>
+        <div className="text-right">
+          <div className="text-sm font-bold text-blue-600 dark:text-blue-500">{formatTime(flight.totalTime)}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">{flight.picName}</div>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
+          <span className="text-gray-500 dark:text-gray-400 block">{t.departure}</span>
+          <span className="text-gray-900 dark:text-white">{flight.departurePlace} ({flight.departureTime})</span>
+        </div>
+        <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
+          <span className="text-gray-500 dark:text-gray-400 block">{t.arrival}</span>
+          <span className="text-gray-900 dark:text-white">{flight.arrivalPlace} ({flight.arrivalTime})</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 text-xs text-center">
+          <div className="bg-gray-50 dark:bg-gray-700 p-1 rounded">
+            <span className="block text-gray-500 dark:text-gray-400 text-[10px]">PIC</span>
+            <span className="text-gray-900 dark:text-white">{formatTime(flight.picTime)}</span>
+          </div>
+          <div className="bg-gray-50 dark:bg-gray-700 p-1 rounded">
+            <span className="block text-gray-500 dark:text-gray-400 text-[10px]">Dual</span>
+            <span className="text-gray-900 dark:text-white">{formatTime(flight.dualTime)}</span>
+          </div>
+          <div className="bg-gray-50 dark:bg-gray-700 p-1 rounded">
+            <span className="block text-gray-500 dark:text-gray-400 text-[10px]">Ldg</span>
+            <span className="text-gray-900 dark:text-white">{flight.landingsDay}/{flight.landingsNight}</span>
+          </div>
+      </div>
+
+      {showDetails && (
+        <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-gray-700 animate-in slide-in-from-top-1">
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
+              <span className="text-gray-500 dark:text-gray-400 block text-[10px]">Single Pilot (SE/ME)</span>
+              <span className="text-gray-900 dark:text-white">{formatTime(flight.singlePilotSE)} / {formatTime(flight.singlePilotME)}</span>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
+              <span className="text-gray-500 dark:text-gray-400 block text-[10px]">Multi Pilot</span>
+              <span className="text-gray-900 dark:text-white">{formatTime(flight.multiPilot)}</span>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
+              <span className="text-gray-500 dark:text-gray-400 block text-[10px]">Night / IFR</span>
+              <span className="text-gray-900 dark:text-white">{formatTime(flight.nightTime)} / {formatTime(flight.ifrTime)}</span>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
+              <span className="text-gray-500 dark:text-gray-400 block text-[10px]">Copilot / Instr</span>
+              <span className="text-gray-900 dark:text-white">{formatTime(flight.copilotTime)} / {formatTime(flight.instructorTime)}</span>
+            </div>
+          </div>
+          {flight.remarks && (
+            <div className="text-xs text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-700 p-2 rounded">
+              "{flight.remarks}"
+            </div>
+          )}
+        </div>
+      )}
+      
+      <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
+        <button
+          onClick={() => setShowDetails(!showDetails)}
+          className="text-xs flex items-center gap-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        >
+          {showDetails ? (
+            <>
+              <ChevronUp size={14} /> Hide Details
+            </>
+          ) : (
+            <>
+              <ChevronDown size={14} /> Show Details
+            </>
+          )}
+        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => onEdit?.(flight)}
+            className="p-1 text-blue-600 hover:bg-blue-50 rounded dark:text-blue-400 dark:hover:bg-gray-700"
+          >
+            <Edit2 size={16} />
+          </button>
+          <button 
+            onClick={() => onDelete?.(flight.id)}
+            className="p-1 text-red-600 hover:bg-red-50 rounded dark:text-red-400 dark:hover:bg-gray-700"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function LogbookTable({ 
@@ -61,65 +165,13 @@ export default function LogbookTable({
       {/* Mobile Card View */}
       <div className="md:hidden space-y-4">
         {filledFlights.filter(f => f.id && !f.id.startsWith('empty')).map((flight) => (
-          <div key={flight.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm space-y-3">
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="text-sm font-bold text-gray-900 dark:text-white">{flight.date ? new Date(flight.date).toLocaleDateString('en-CA').replace(/-/g, '.') : '-'}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">{flight.aircraftModel} ({flight.aircraftReg})</div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-bold text-blue-600 dark:text-blue-500">{formatTime(flight.totalTime)}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">{flight.picName}</div>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                <span className="text-gray-500 dark:text-gray-400 block">Route</span>
-                <span className="text-gray-900 dark:text-white">{flight.departurePlace} → {flight.arrivalPlace}</span>
-              </div>
-              <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                <span className="text-gray-500 dark:text-gray-400 block">Times</span>
-                <span className="text-gray-900 dark:text-white">{flight.departureTime} - {flight.arrivalTime}</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 text-xs text-center">
-               <div className="bg-gray-50 dark:bg-gray-700 p-1 rounded">
-                 <span className="block text-gray-500 dark:text-gray-400 text-[10px]">PIC</span>
-                 <span className="text-gray-900 dark:text-white">{formatTime(flight.picTime)}</span>
-               </div>
-               <div className="bg-gray-50 dark:bg-gray-700 p-1 rounded">
-                 <span className="block text-gray-500 dark:text-gray-400 text-[10px]">Dual</span>
-                 <span className="text-gray-900 dark:text-white">{formatTime(flight.dualTime)}</span>
-               </div>
-               <div className="bg-gray-50 dark:bg-gray-700 p-1 rounded">
-                 <span className="block text-gray-500 dark:text-gray-400 text-[10px]">Ldg</span>
-                 <span className="text-gray-900 dark:text-white">{flight.landingsDay}/{flight.landingsNight}</span>
-               </div>
-            </div>
-            
-            {flight.remarks && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 italic border-t border-gray-200 dark:border-gray-700 pt-2">
-                "{flight.remarks}"
-              </div>
-            )}
-            
-            <div className="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-              <button 
-                onClick={() => onEdit?.(flight)}
-                className="p-1 text-blue-600 hover:bg-blue-50 rounded dark:text-blue-400 dark:hover:bg-gray-700"
-              >
-                <Edit2 size={16} />
-              </button>
-              <button 
-                onClick={() => onDelete?.(flight.id)}
-                className="p-1 text-red-600 hover:bg-red-50 rounded dark:text-red-400 dark:hover:bg-gray-700"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          </div>
+          <MobileFlightCard 
+            key={flight.id} 
+            flight={flight} 
+            onEdit={onEdit} 
+            onDelete={onDelete} 
+            t={t}
+          />
         ))}
       </div>
 
@@ -274,7 +326,7 @@ export default function LogbookTable({
         </table>
       </div>
 
-      <div className="flex justify-between items-center p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
         <button 
           disabled={page <= 1}
           onClick={() => handlePageChange(page - 1)}
