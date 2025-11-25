@@ -65,4 +65,4 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Run db push and start server
-CMD ["/bin/sh", "-c", "npx prisma@6.19.0 db push --accept-data-loss && node scripts/create_admin.js && node server.js"]
+CMD ["/bin/sh", "-c", "npx prisma@6.19.0 db push --accept-data-loss && node create-admin.js && node server.js"]

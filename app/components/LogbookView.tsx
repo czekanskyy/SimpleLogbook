@@ -1,17 +1,18 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import Link from 'next/link'
 import { Flight } from '@prisma/client'
 import LogbookTable from '@/app/components/LogbookTable'
 import AddEntryModal from '@/app/components/AddEntryModal'
 import CSVImport from '@/app/components/CSVImport'
 import SettingsModal from '@/app/components/SettingsModal'
-import HelpModal from '@/app/components/HelpModal'
+import ChangelogModal from '@/app/components/ChangelogModal'
 import ProfileModal from '@/app/components/ProfileModal'
 import DeleteConfirmationModal from '@/app/components/DeleteConfirmationModal'
 import { deleteFlight } from '@/app/lib/actions'
 import { useUI } from '@/app/context/UIContext'
-import { Download, Plus, Printer, HelpCircle } from 'lucide-react'
+import { Download, Plus, Printer, HelpCircle, Megaphone } from 'lucide-react'
 
 interface LogbookViewProps {
   flights: Flight[]
@@ -37,6 +38,7 @@ export default function LogbookView({
   const { user, t } = useUI()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isChangelogOpen, setIsChangelogOpen] = useState(false)
   const [editingFlight, setEditingFlight] = useState<Flight | null>(null)
   const [isAddingFlight, setIsAddingFlight] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -102,13 +104,20 @@ export default function LogbookView({
             </button>
 
             <button
-              onClick={() => (document.getElementById('help-modal-trigger') as HTMLButtonElement)?.click()}
+              onClick={() => setIsChangelogOpen(true)}
               className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline-none"
-              title={t.help}
+              title={t.changelog}
+            >
+              <Megaphone size={24} />
+            </button>
+
+            <Link
+              href="/help"
+              className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline-none"
+              title={t.help.title}
             >
               <HelpCircle size={24} />
-            </button>
-            <div className="hidden"><HelpModal /></div>
+            </Link>
 
             <button
               onClick={() => setIsSettingsOpen(true)}
@@ -181,6 +190,13 @@ export default function LogbookView({
       <ProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
+      />
+      
+
+      
+      <ChangelogModal
+        isOpen={isChangelogOpen}
+        onClose={() => setIsChangelogOpen(false)}
       />
       
       <AddEntryModal

@@ -43,6 +43,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   events: {
     createUser: async ({ user }) => {
+      console.log('EVENT: createUser triggered for:', user.email)
       await sendNewUserEmail(user)
     },
   },

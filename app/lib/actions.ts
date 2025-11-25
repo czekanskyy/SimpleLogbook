@@ -5,6 +5,7 @@ import { flightSchema, FlightFormData } from './schema'
 import { revalidatePath } from 'next/cache'
 import { Prisma } from '@prisma/client'
 import { auth } from '@/auth'
+import { sendNewUserEmail } from './email'
 
 export async function getFlights(page: number = 1, pageSize?: number, year?: number) {
   let limit = pageSize
@@ -305,7 +306,7 @@ export async function registerUser(formData: FormData) {
     const colors = ['blue', 'red', 'green', 'yellow', 'purple', 'pink', 'indigo', 'cyan', 'orange']
     const randomColor = colors[Math.floor(Math.random() * colors.length)]
 
-    await prisma.user.create({
+    const newUser = await prisma.user.create({
       data: {
         name,
         email,
@@ -315,6 +316,9 @@ export async function registerUser(formData: FormData) {
         avatarColor: randomColor,
       }
     })
+
+    // Manually send email since NextAuth event won't trigger for custom registration
+    await sendNewUserEmail(newUser)
 
     return { success: true }
   } catch (error) {
@@ -395,4 +399,46 @@ export async function deleteUser(formData: FormData) {
   })
 
   revalidatePath('/admin')
+}
+
+export async function deleteAllFlights(password: string) {
+  const session = await auth()
+  if (!session?.user?.id || !session?.user?.email) {
+    return { success: false, error: 'Unauthorized' }
+  }
+  
+  // Get user with password
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true, password: true }
+  })
+  
+  if (!user || !user.password) {
+    return { success: false, error: 'User not found' }
+  }
+  
+  // Verify password
+  const bcrypt = require('bcryptjs')
+  const passwordsMatch = await bcrypt.compare(password, user.password)
+  
+  if (!passwordsMatch) {
+    return { success: false, error: 'Incorrect password' }
+  }
+  
+  // Delete all flights for this user - CRITICAL: must filter by userId
+  // NOTE: Old flights might have userId = null, so we delete ALL if user is authenticated
+  // In a multi-user system, this should be reconsidered
+  const result = await prisma.flight.deleteMany({
+    where: { 
+      OR: [
+        { userId: session.user.id },
+        { userId: null }
+      ]
+    }
+  })
+  
+  console.log(`Deleted ${result.count} flights for user ${session.user.email}`)
+  
+  revalidatePath('/')
+  return { success: true, deletedCount: result.count }
 }

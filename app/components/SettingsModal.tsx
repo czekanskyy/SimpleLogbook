@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useUI } from '../context/UIContext'
 import { updateSettings } from '../lib/actions'
+import { deleteAllFlights } from '../lib/actions'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -13,6 +14,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { settings, setLanguage } = useUI()
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [rows, setRows] = useState(settings.rowsPerPage)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteError, setDeleteError] = useState('')
 
   useEffect(() => {
     // Check current theme
@@ -54,6 +58,40 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       document.documentElement.classList.remove('dark')
       localStorage.theme = 'light'
     }
+  }
+
+  const handleDeleteAll = async () => {
+    if (!deletePassword) {
+      setDeleteError(settings.language === 'pl' ? 'Wprowadź hasło' : 'Enter password')
+      return
+    }
+
+    setDeleteError('')
+    
+    try {
+      const result = await deleteAllFlights(deletePassword)
+      
+      if (result.success) {
+        setIsDeleting(false)
+        setDeletePassword('')
+        onClose()
+        // Page will refresh due to revalidatePath
+      } else {
+        setDeleteError(
+          result.error === 'Incorrect password' 
+            ? (settings.language === 'pl' ? 'Nieprawidłowe hasło' : 'Incorrect password')
+            : (settings.language === 'pl' ? 'Nie udało się usunąć wpisów' : 'Failed to delete entries')
+        )
+      }
+    } catch (err) {
+      setDeleteError(settings.language === 'pl' ? 'Nie udało się usunąć wpisów' : 'Failed to delete entries')
+    }
+  }
+
+  const cancelDelete = () => {
+    setIsDeleting(false)
+    setDeletePassword('')
+    setDeleteError('')
   }
 
   return (
@@ -193,6 +231,69 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   className="w-20 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Danger Zone */}
+          <div>
+            <h4 className="text-sm font-medium text-red-600 dark:text-red-400 mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              {settings.language === 'pl' ? 'Strefa Niebezpieczna' : 'Danger Zone'}
+            </h4>
+            <div className="p-4 rounded-lg border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 space-y-3">
+              {!isDeleting ? (
+                <div className="space-y-3">
+                  <p className="font-bold text-red-900 dark:text-red-100 text-lg">
+                    {settings.language === 'pl' ? 'Usuń wszystkie wpisy' : 'Delete all entries'}
+                  </p>
+                  <p className="text-sm text-red-700 dark:text-red-300 font-medium">
+                    {settings.language === 'pl' ? 'Uwaga! To działanie jest nieodwracalne!' : 'Warning! This action is irreversible!'}
+                  </p>
+                  <button
+                    onClick={() => setIsDeleting(true)}
+                    className="w-full px-4 py-3 text-sm font-bold text-white bg-red-600 border border-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                  >
+                    {settings.language === 'pl' ? 'Usuń Wszystkie' : 'Delete All'}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-red-900 dark:text-red-100">
+                    {settings.language === 'pl' 
+                      ? 'Wprowadź swoje hasło aby potwierdzić usunięcie wszystkich lotów'
+                      : 'Enter your password to confirm deletion of all flights'}
+                  </p>
+                  <input
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleDeleteAll()}
+                    placeholder={settings.language === 'pl' ? 'Hasło' : 'Password'}
+                    className="w-full px-3 py-2 border border-red-300 dark:border-red-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    autoFocus
+                  />
+                  {deleteError && (
+                    <p className="text-sm text-red-700 dark:text-red-300 font-medium">{deleteError}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={cancelDelete}
+                      className="flex-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      {settings.language === 'pl' ? 'Anuluj' : 'Cancel'}
+                    </button>
+                    <button
+                      onClick={handleDeleteAll}
+                      disabled={!deletePassword}
+                      className="flex-1 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {settings.language === 'pl' ? 'Potwierdź Usunięcie' : 'Confirm Delete'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -349,7 +349,7 @@ export default function AddEntryModal({
                     maxLength={4}
                   />
                   <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-900 dark:text-white">{t.time}</label>
+                    <label className="block text-sm font-medium text-gray-900 dark:text-white">{t.time} (UTC)</label>
                     <input 
                       type="time" 
                       name="departureTime" 
@@ -376,7 +376,7 @@ export default function AddEntryModal({
                     maxLength={4}
                   />
                   <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-900 dark:text-white">{t.time}</label>
+                    <label className="block text-sm font-medium text-gray-900 dark:text-white">{t.time} (UTC)</label>
                     <input 
                       type="time" 
                       name="arrivalTime" 

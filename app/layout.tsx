@@ -4,6 +4,7 @@ import "./globals.css";
 import { UIProvider } from "@/app/context/UIContext";
 import { auth } from "@/auth";
 import { getSettings } from "@/app/lib/actions";
+import Footer from "@/app/components/Footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -40,9 +41,12 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${inter.className} min-h-screen flex flex-col`} suppressHydrationWarning>
         <UIProvider initialSettings={settings as any} user={session?.user}>
-          {children}
+          <div className="flex-1 flex flex-col">
+            {children}
+          </div>
+          <Footer />
         </UIProvider>
       </body>
     </html>
