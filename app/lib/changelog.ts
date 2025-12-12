@@ -6,6 +6,27 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '1.0.8',
+    date: '2025-12-12',
+    changes: [
+      'v108_gliderDistance',
+      'v108_launchMethods',
+      'v108_helpPage',
+      'v108_uiImprovements',
+      'v108_translations'
+    ]
+  },
+  {
+    version: '1.0.7',
+    date: '2025-12-11',
+    changes: [
+      'v107_logbookSplit',
+      'v107_globalDelete',
+      'v107_hubPage',
+      'v107_uiRefinements'
+    ]
+  },
+  {
     version: '1.0.6',
     date: '2025-11-25',
     changes: [

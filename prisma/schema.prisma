@@ -45,10 +45,12 @@ model User {
   role          String    @default("USER") // USER, ADMIN
   isApproved    Boolean   @default(false)
   
-  accounts      Account[]
-  sessions      Session[]
-  flights       Flight[]
-  settings      Settings?
+  accounts          Account[]
+  sessions          Session[]
+  flights           Flight[]
+  gliderFlights     GliderFlight[]
+  simulatorSessions SimulatorSession[]
+  settings          Settings?
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -112,4 +114,89 @@ model Settings {
   
   userId      String? @unique
   user        User?   @relation(fields: [userId], references: [id])
+}
+
+// Glider Flight Log based on PART SFCL.050
+model GliderFlight {
+  id String @id @default(cuid())
+  
+  date DateTime
+  
+  departurePlace String
+  departureTime  String // HH:MM
+  
+  arrivalPlace String
+  arrivalTime  String // HH:MM
+  
+  gliderModel String  // Sailplane type
+  gliderReg   String  // Registration
+  
+  // Launch method: WINCH, AEROTOW, SELF, BUNGEE
+  launchMethod String
+  
+  // Total time in minutes
+  totalTime Int @default(0)
+  
+  picName String // Name of PIC
+  
+  // Pilot function: PIC, DUAL, FI, FE (FI = FI(S)/BI(S), FE = FE(S))
+  pilotFunction String @default("PIC")
+  
+  // Number of launches
+  launches Int @default(1)
+  
+  // Pilot function times in minutes
+  picTime        Int @default(0)
+  dualTime       Int @default(0)
+  instructorTime Int @default(0)
+  
+  // Operational conditions (comma-separated): CLOUD, AEROBATIC, NIGHT
+  operationalConditions String?
+  
+  // Distance in km (for cross-country flights)
+  distance Float?
+  
+  remarks String?
+  
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Simulator Session Log based on EASA FSTD requirements
+model SimulatorSession {
+  id String @id @default(cuid())
+  
+  date DateTime
+  
+  // FSTD Type: FFS, FNPT_I, FNPT_II, FTD, BITD
+  fstdType String
+  
+  // FSTD Qualification/Certification number
+  fstdQualification String?
+  
+  // Aircraft type being simulated (optional)
+  aircraftType String?
+  
+  // Session time in minutes
+  totalTime Int @default(0)
+  
+  // Description of exercise performed
+  exercise String?
+  
+  // Instructor name (optional)
+  instructorName String?
+  
+  remarks String?
+  
+  // Exclude from total time calculations
+  excludeFromTotal Boolean @default(false)
+  
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

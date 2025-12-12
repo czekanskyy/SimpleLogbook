@@ -10,6 +10,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url)
   const year = searchParams.get('year')
+  const type = searchParams.get('type') || 'aircraft'
 
   const where: any = {}
   if (year) {
@@ -19,6 +20,16 @@ export async function GET(request: Request) {
     }
   }
 
+  if (type === 'glider') {
+    return exportGliderFlights(where)
+  } else if (type === 'simulator') {
+    return exportSimulatorSessions(where)
+  } else {
+    return exportAircraftFlights(where)
+  }
+}
+
+async function exportAircraftFlights(where: any) {
   const flights = await prisma.flight.findMany({
     where,
     orderBy: [
@@ -82,7 +93,106 @@ export async function GET(request: Request) {
   return new Response(csv, {
     headers: {
       'Content-Type': 'text/csv',
-      'Content-Disposition': `attachment; filename="logbook-${new Date().toISOString().split('T')[0]}.csv"`
+      'Content-Disposition': `attachment; filename="aircraft-logbook-${new Date().toISOString().split('T')[0]}.csv"`
+    }
+  })
+}
+
+async function exportGliderFlights(where: any) {
+  const flights = await prisma.gliderFlight.findMany({
+    where,
+    orderBy: [
+      { date: 'asc' },
+      { departureTime: 'asc' }
+    ]
+  })
+
+  const header = [
+    'Date',
+    'Departure Place',
+    'Departure Time',
+    'Arrival Place',
+    'Arrival Time',
+    'Glider Model',
+    'Glider Reg',
+    'Launch Method',
+    'Total Time',
+    'PIC Name',
+    'Pilot Function',
+    'Launches',
+    'PIC Time',
+    'Dual Time',
+    'Instructor Time',
+    'Distance',
+    'Remarks'
+  ].join(',')
+
+  const rows = flights.map(flight => {
+    return [
+      flight.date.toISOString().split('T')[0],
+      flight.departurePlace,
+      flight.departureTime,
+      flight.arrivalPlace,
+      flight.arrivalTime,
+      flight.gliderModel,
+      flight.gliderReg,
+      flight.launchMethod,
+      formatTime(flight.totalTime),
+      flight.picName,
+      flight.pilotFunction,
+      flight.launches,
+      formatTime(flight.picTime),
+      formatTime(flight.dualTime),
+      formatTime(flight.instructorTime),
+      flight.distance || 0,
+      `"${flight.remarks || ''}"`
+    ].join(',')
+  })
+
+  const csv = [header, ...rows].join('\n')
+
+  return new Response(csv, {
+    headers: {
+      'Content-Type': 'text/csv',
+      'Content-Disposition': `attachment; filename="glider-logbook-${new Date().toISOString().split('T')[0]}.csv"`
+    }
+  })
+}
+
+async function exportSimulatorSessions(where: any) {
+  const sessions = await prisma.simulatorSession.findMany({
+    where,
+    orderBy: [
+      { date: 'asc' }
+    ]
+  })
+
+  const header = [
+    'Date',
+    'FSTD Type',
+    'Total Time',
+    'Exercise',
+    'Remarks',
+    'Exclude From Total'
+  ].join(',')
+
+  const rows = sessions.map(session => {
+    return [
+      session.date.toISOString().split('T')[0],
+      session.fstdType,
+      formatTime(session.totalTime),
+      `"${session.exercise || ''}"`,
+      `"${session.remarks || ''}"`,
+      (session as any).excludeFromTotal ? 'true' : 'false'
+    ].join(',')
+  })
+
+  const csv = [header, ...rows].join('\n')
+
+  return new Response(csv, {
+    headers: {
+      'Content-Type': 'text/csv',
+      'Content-Disposition': `attachment; filename="simulator-logbook-${new Date().toISOString().split('T')[0]}.csv"`
     }
   })
 }

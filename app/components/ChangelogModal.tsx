@@ -11,7 +11,7 @@ interface ChangelogModalProps {
 }
 
 export default function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
-  const [expandedVersion, setExpandedVersion] = useState('1.0.6')
+  const [expandedVersion, setExpandedVersion] = useState(changelog[0]?.version || '')
   const { t } = useUI()
 
   const toggleVersion = (version: string) => {

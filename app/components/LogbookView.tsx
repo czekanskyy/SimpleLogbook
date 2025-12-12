@@ -2,27 +2,49 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { Flight } from '@prisma/client'
+import { Flight, GliderFlight, SimulatorSession } from '@prisma/client'
 import LogbookTable from '@/app/components/LogbookTable'
+import GliderLogbookTable from '@/app/components/GliderLogbookTable'
+import SimulatorLogbookTable from '@/app/components/SimulatorLogbookTable'
+import LogbookTabs, { LogbookType } from '@/app/components/LogbookTabs'
 import AddEntryModal from '@/app/components/AddEntryModal'
+import AddGliderEntryModal from '@/app/components/AddGliderEntryModal'
+import AddSimulatorEntryModal from '@/app/components/AddSimulatorEntryModal'
 import CSVImport from '@/app/components/CSVImport'
 import SettingsModal from '@/app/components/SettingsModal'
 import ChangelogModal from '@/app/components/ChangelogModal'
 import ProfileModal from '@/app/components/ProfileModal'
 import DeleteConfirmationModal from '@/app/components/DeleteConfirmationModal'
-import { deleteFlight } from '@/app/lib/actions'
+import { deleteFlight, deleteGliderFlight, deleteSimulatorSession } from '@/app/lib/actions'
 import { useUI } from '@/app/context/UIContext'
 import { Download, Plus, Printer, HelpCircle, Megaphone, Menu, X } from 'lucide-react'
 
 interface LogbookViewProps {
-  flights: Flight[]
-  page: number
-  totalPages: number
-  pageTotals: any
-  previousTotals: any
-  lifetimeTotals: any
+  // Aircraft data
+  flights?: Flight[]
+  page?: number
+  totalPages?: number
+  pageTotals?: any
+  previousTotals?: any
+  lifetimeTotals?: any
+  // Glider data
+  gliderFlights?: GliderFlight[]
+  gliderPage?: number
+  gliderTotalPages?: number
+  gliderPageTotals?: { totalTime: number; launches: number; picTime: number; dualTime: number; instructorTime: number }
+  gliderPreviousTotals?: { totalTime: number; launches: number; picTime: number; dualTime: number; instructorTime: number }
+  gliderLifetimeTotals?: { totalTime: number | null; launches: number | null }
+  // Simulator data
+  simulatorSessions?: SimulatorSession[]
+  simulatorPage?: number
+  simulatorTotalPages?: number
+  simulatorPageTotals?: { totalTime: number }
+  simulatorPreviousTotals?: { totalTime: number }
+  simulatorLifetimeTotals?: { totalTime: number | null }
+  // Common
   rowsPerPage: number
   year?: number
+  activeTab: LogbookType
 }
 
 export default function LogbookView({
@@ -32,35 +54,87 @@ export default function LogbookView({
   pageTotals,
   previousTotals,
   lifetimeTotals,
+  gliderFlights,
+  gliderPage,
+  gliderTotalPages,
+  gliderPageTotals,
+  gliderPreviousTotals,
+  gliderLifetimeTotals,
+  simulatorSessions,
+  simulatorPage,
+  simulatorTotalPages,
+  simulatorPageTotals,
+  simulatorPreviousTotals,
+  simulatorLifetimeTotals,
   rowsPerPage,
-  year
+  year,
+  activeTab
 }: LogbookViewProps) {
   const { user, t } = useUI()
+  // const [activeTab, setActiveTab] = useState<LogbookType>(initialTab) // Removed state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isChangelogOpen, setIsChangelogOpen] = useState(false)
+  
+  // Flight editing states
   const [editingFlight, setEditingFlight] = useState<Flight | null>(null)
+  const [editingGliderFlight, setEditingGliderFlight] = useState<GliderFlight | null>(null)
+  const [editingSimulatorSession, setEditingSimulatorSession] = useState<SimulatorSession | null>(null)
+  
+  // Add new entry states
   const [isAddingFlight, setIsAddingFlight] = useState(false)
+  const [isAddingGliderFlight, setIsAddingGliderFlight] = useState(false)
+  const [isAddingSimulatorSession, setIsAddingSimulatorSession] = useState(false)
+  
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteType, setDeleteType] = useState<LogbookType>('aircraft')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  const handleDeleteClick = (id: string) => {
+  const handleDeleteClick = (id: string, type: LogbookType = 'aircraft') => {
     setDeleteId(id)
+    setDeleteType(type)
   }
 
   const handleConfirmDelete = async () => {
     if (deleteId) {
-      await deleteFlight(deleteId)
+      if (deleteType === 'aircraft') {
+        await deleteFlight(deleteId)
+      } else if (deleteType === 'glider') {
+        await deleteGliderFlight(deleteId)
+      } else if (deleteType === 'simulator') {
+        await deleteSimulatorSession(deleteId)
+      }
       setDeleteId(null)
     }
   }
 
+  const handleAddEntry = () => {
+    if (activeTab === 'aircraft') {
+      setIsAddingFlight(true)
+    } else if (activeTab === 'glider') {
+      setIsAddingGliderFlight(true)
+    } else if (activeTab === 'simulator') {
+      setIsAddingSimulatorSession(true)
+    }
+  }
+
+  const getAddButtonText = () => {
+    if (activeTab === 'aircraft') return t.addFlight
+    if (activeTab === 'glider') return t.addGliderFlight
+    if (activeTab === 'simulator') return t.addSimulatorSession
+    return t.addFlight
+  }
+
   const handleExport = () => {
-    window.location.href = '/api/export'
+    const params = new URLSearchParams()
+    params.set('type', activeTab)
+    if (year) params.set('year', year.toString())
+    window.location.href = `/api/export?${params.toString()}`
   }
 
   const handlePrint = () => {
     const params = new URLSearchParams()
+    params.set('type', activeTab)
     if (year) params.set('year', year.toString())
     window.open(`/print?${params.toString()}`, '_blank')
   }
@@ -68,14 +142,14 @@ export default function LogbookView({
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-8 transition-colors duration-300">
       <div className="w-full space-y-6">
-        <header className="sticky md:static top-0 z-40 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 md:p-6 mb-6">
+        <header className="sticky md:static top-0 z-40 bg-white dark:bg-gray-800 rounded-lg md:rounded-bl-none shadow-sm border border-gray-200 dark:border-gray-700 p-4 md:p-6 mb-4 md:mb-0">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6">
             <div className="w-full md:w-auto flex justify-between items-center">
               <div className="space-y-1">
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-                  SimpleLogbook
+                  eLogbook
                 </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">EASA PART FCL.050 COMPLIANT</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">EASA PART FCL.050 / SFCL.050 COMPLIANT</p>
               </div>
               
               {/* Mobile Menu Button */}
@@ -89,32 +163,31 @@ export default function LogbookView({
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-4">
+
               <button
-                onClick={() => setIsAddingFlight(true)}
+                onClick={handleAddEntry}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium text-sm shadow-sm focus:ring-4 focus:ring-green-300 dark:focus:ring-green-800 whitespace-nowrap"
-                title={t.addFlight}
+                title={getAddButtonText()}
               >
                 <Plus size={16} />
-                <span className="hidden sm:inline">{t.addFlight}</span>
+                <span className="hidden sm:inline">{getAddButtonText()}</span>
               </button>
-              <CSVImport />
+              <CSVImport logbookType={activeTab} />
               <button
                 onClick={handleExport}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors font-medium text-sm shadow-sm focus:ring-4 focus:ring-slate-300 dark:focus:ring-slate-800 whitespace-nowrap"
+                className="p-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors shadow-sm focus:ring-4 focus:ring-slate-300 dark:focus:ring-slate-800"
                 title={t.exportCsv}
               >
-                <Download size={16} />
-                <span className="hidden sm:inline">{t.exportCsv}</span>
+                <Download size={18} />
               </button>
-              <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2"></div>
-              
               <button
                 onClick={handlePrint}
-                className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline-none"
+                className="p-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors shadow-sm focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800"
                 title={t.printLogbook || 'Print Logbook'}
               >
-                <Printer size={24} />
+                <Printer size={18} />
               </button>
+              <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2"></div>
 
               <button
                 onClick={() => setIsChangelogOpen(true)}
@@ -184,22 +257,26 @@ export default function LogbookView({
           {isMobileMenuOpen && (
             <div className="md:hidden mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3 animate-in slide-in-from-top-2 duration-200">
               
-              {/* Add Flight - Full Width */}
+              {/* Add Entry - Full Width */}
               <button
                 onClick={() => {
-                  setIsAddingFlight(true)
+                  handleAddEntry()
                   setIsMobileMenuOpen(false)
                 }}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-semibold text-sm shadow-sm"
               >
                 <Plus size={18} />
-                <span>{t.addFlight}</span>
+                <span>{getAddButtonText()}</span>
               </button>
 
               {/* Import / Export - 50/50 */}
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <CSVImport />
+                  <CSVImport 
+                    logbookType={activeTab} 
+                    className="w-full px-4 py-3 font-semibold text-sm" 
+                    showLabel 
+                  />
                 </div>
                 <button
                   onClick={handleExport}
@@ -286,21 +363,56 @@ export default function LogbookView({
           )}
         </header>
 
+        {/* Logbook Tabs */}
+        <div className="mb-4 z-50 -translate-y-px">
+          <LogbookTabs activeTab={activeTab} />
+        </div>
+
+        {/* Logbook Content */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <LogbookTable 
-            flights={flights} 
-            page={page} 
-            totalPages={totalPages}
-            pageTotals={pageTotals}
-            previousTotals={previousTotals}
-            lifetimeTotals={lifetimeTotals}
-            rowsPerPage={rowsPerPage}
-            onEdit={setEditingFlight}
-            onDelete={handleDeleteClick}
-          />
+          {activeTab === 'aircraft' && flights && (
+            <LogbookTable 
+              flights={flights} 
+              page={page!} 
+              totalPages={totalPages!}
+              pageTotals={pageTotals}
+              previousTotals={previousTotals}
+              lifetimeTotals={lifetimeTotals}
+              rowsPerPage={rowsPerPage}
+              onEdit={setEditingFlight}
+              onDelete={(id) => handleDeleteClick(id, 'aircraft')}
+            />
+          )}
+          {activeTab === 'glider' && gliderFlights && (
+            <GliderLogbookTable 
+              flights={gliderFlights} 
+              page={gliderPage!} 
+              totalPages={gliderTotalPages!}
+              pageTotals={gliderPageTotals!}
+              previousTotals={gliderPreviousTotals!}
+              lifetimeTotals={gliderLifetimeTotals!}
+              rowsPerPage={rowsPerPage}
+              onEdit={setEditingGliderFlight}
+              onDelete={(id) => handleDeleteClick(id, 'glider')}
+            />
+          )}
+          {activeTab === 'simulator' && simulatorSessions && (
+            <SimulatorLogbookTable 
+              sessions={simulatorSessions} 
+              page={simulatorPage!} 
+              totalPages={simulatorTotalPages!}
+              pageTotals={simulatorPageTotals!}
+              previousTotals={simulatorPreviousTotals!}
+              lifetimeTotals={simulatorLifetimeTotals!}
+              rowsPerPage={rowsPerPage}
+              onEdit={setEditingSimulatorSession}
+              onDelete={(id) => handleDeleteClick(id, 'simulator')}
+            />
+          )}
         </div>
       </div>
 
+      {/* Aircraft Modals */}
       <AddEntryModal 
         isOpen={isAddingFlight} 
         onClose={() => setIsAddingFlight(false)} 
@@ -312,6 +424,36 @@ export default function LogbookView({
           isOpen={true} 
           onClose={() => setEditingFlight(null)} 
           initialData={editingFlight}
+        />
+      )}
+
+      {/* Glider Modals */}
+      <AddGliderEntryModal 
+        isOpen={isAddingGliderFlight} 
+        onClose={() => setIsAddingGliderFlight(false)} 
+        hideTrigger
+      />
+
+      {editingGliderFlight && (
+        <AddGliderEntryModal 
+          isOpen={true} 
+          onClose={() => setEditingGliderFlight(null)} 
+          initialData={editingGliderFlight}
+        />
+      )}
+
+      {/* Simulator Modals */}
+      <AddSimulatorEntryModal 
+        isOpen={isAddingSimulatorSession} 
+        onClose={() => setIsAddingSimulatorSession(false)} 
+        hideTrigger
+      />
+
+      {editingSimulatorSession && (
+        <AddSimulatorEntryModal 
+          isOpen={true} 
+          onClose={() => setEditingSimulatorSession(null)} 
+          initialData={editingSimulatorSession}
         />
       )}
 

@@ -14,6 +14,12 @@ export function formatTime(minutes: number | null | undefined): string {
 
 export function parseTime(timeStr: string): number {
   if (!timeStr) return 0
+  // If it's just a number (raw minutes), return it directly
+  if (!timeStr.includes(':')) {
+    const num = parseInt(timeStr)
+    return isNaN(num) ? 0 : num
+  }
+  // Otherwise parse as HH:MM format
   const [h, m] = timeStr.split(':').map(Number)
   return (h || 0) * 60 + (m || 0)
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useUI } from '../context/UIContext'
 import { updateSettings } from '../lib/actions'
-import { deleteAllFlights } from '../lib/actions'
+import { deleteAllEntries } from '../lib/actions'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -69,7 +69,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     setDeleteError('')
     
     try {
-      const result = await deleteAllFlights(deletePassword)
+      const result = await deleteAllEntries(deletePassword)
       
       if (result.success) {
         setIsDeleting(false)
@@ -80,11 +80,13 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         setDeleteError(
           result.error === 'Incorrect password' 
             ? (settings.language === 'pl' ? 'Nieprawidłowe hasło' : 'Incorrect password')
-            : (settings.language === 'pl' ? 'Nie udało się usunąć wpisów' : 'Failed to delete entries')
+            : (settings.language === 'pl' ? `Nie udało się usunąć wpisów: ${result.error}` : `Failed to delete entries: ${result.error}`)
         )
       }
     } catch (err) {
-      setDeleteError(settings.language === 'pl' ? 'Nie udało się usunąć wpisów' : 'Failed to delete entries')
+      setDeleteError(settings.language === 'pl' 
+        ? `Nie udało się usunąć wpisów: ${err instanceof Error ? err.message : 'Unknown error'}` 
+        : `Failed to delete entries: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 

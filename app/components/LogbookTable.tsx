@@ -2,7 +2,7 @@
 
 import { Flight } from '@prisma/client'
 import { formatTime } from '@/app/lib/utils'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useUI } from '@/app/context/UIContext'
 import { Edit2, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
@@ -136,6 +136,7 @@ export default function LogbookTable({
 }: LogbookTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const { t } = useUI()
   const [jumpPage, setJumpPage] = useState('')
 
@@ -157,7 +158,7 @@ export default function LogbookTable({
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams)
     params.set('page', newPage.toString())
-    router.push(`/?${params.toString()}`)
+    router.push(`${pathname}?${params.toString()}`)
   }
 
   return (
@@ -177,43 +178,43 @@ export default function LogbookTable({
 
       {/* Desktop Table View */}
       <div className="hidden md:block w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-        <table className="min-w-full text-xs text-left border-collapse text-gray-500 dark:text-gray-400">
+        <table className="w-full text-xs text-left border-collapse text-gray-500 dark:text-gray-400" style={{ minWidth: '1800px' }}>
           <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-center">
             <tr>
-              <th className="p-4 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" rowSpan={3}>{t.date}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" colSpan={2}>{t.departure}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" colSpan={2}>{t.arrival}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" colSpan={2}>{t.aircraft}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" colSpan={3}>{t.singlePilotTime}</th>
-              <th className="p-4 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" rowSpan={3}>{t.totalTime}</th>
-              <th className="p-4 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" rowSpan={3}>{t.picName}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" colSpan={2}>{t.landings}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" colSpan={2}>{t.operationalCondition}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" colSpan={4}>{t.pilotFunctionTime}</th>
-              <th className="p-4 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" rowSpan={3}>{t.remarks}</th>
-              <th className="p-4 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap" rowSpan={3}>{t.actions}</th>
+              <th className="p-4 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap min-w-[100px]" rowSpan={3}>{t.date}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap min-w-[250px]" colSpan={2}>{t.departure}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap min-w-[250px]" colSpan={2}>{t.arrival}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap min-w-[300px]" colSpan={2}>{t.aircraft}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap min-w-[300px]" colSpan={3}>{t.singlePilotTime}</th>
+              <th className="p-4 border border-gray-200 dark:border-gray-600 font-semibold align-middle min-w-[100px]" rowSpan={3}>{t.totalTime}</th>
+              <th className="p-4 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap min-w-[150px]" rowSpan={3}>{t.picName}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap min-w-[200px]" colSpan={2}>{t.landings}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap min-w-[200px]" colSpan={2}>{t.operationalCondition}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap min-w-[400px]" colSpan={4}>{t.pilotFunctionTime}</th>
+              <th className="p-4 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap min-w-[250px]" rowSpan={3}>{t.remarks}</th>
+              <th className="p-4 border border-gray-200 dark:border-gray-600 font-semibold align-middle whitespace-nowrap min-w-[100px]" rowSpan={3}>{t.actions}</th>
             </tr>
             <tr>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.place}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.time}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.place}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.time}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[80px]" rowSpan={2}>{t.model}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[80px]" rowSpan={2}>{t.reg}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" colSpan={2}>{t.singlePilot}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.multiPilot}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.day}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.night}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.night}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.ifr}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.pic}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.cop}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.dual}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap" rowSpan={2}>{t.instr}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]" rowSpan={2}>{t.place}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]" rowSpan={2}>{t.time}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]" rowSpan={2}>{t.place}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]" rowSpan={2}>{t.time}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]" rowSpan={2}>{t.model}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]" rowSpan={2}>{t.reg}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[200px]" colSpan={2}>{t.singlePilot}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-break-spaces min-w-[100px]" rowSpan={2}>{t.multiPilot}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]" rowSpan={2}>{t.day}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]" rowSpan={2}>{t.night}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]" rowSpan={2}>{t.night}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]" rowSpan={2}>{t.ifr}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]" rowSpan={2}>{t.pic}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]" rowSpan={2}>{t.cop}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]" rowSpan={2}>{t.dual}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]" rowSpan={2}>{t.instr}</th>
             </tr>
             <tr>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap">{t.se}</th>
-              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap">{t.me}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]">{t.se}</th>
+              <th className="p-3 border border-gray-200 dark:border-gray-600 font-medium whitespace-nowrap min-w-[100px]">{t.me}</th>
             </tr>
           </thead>
           <tbody>

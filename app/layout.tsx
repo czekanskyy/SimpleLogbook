@@ -9,7 +9,7 @@ import Footer from "@/app/components/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'SimpleLogbook',
+  title: 'eLogbook',
   description: 'A simple pilot logbook',
 };
 

@@ -1,7 +1,7 @@
 'use server'
 
 import { prisma } from './db'
-import { flightSchema, FlightFormData } from './schema'
+import { flightSchema, FlightFormData, GliderFlightFormData, SimulatorSessionFormData } from './schema'
 import { revalidatePath } from 'next/cache'
 import { Prisma } from '@prisma/client'
 import { auth } from '@/auth'
@@ -401,7 +401,7 @@ export async function deleteUser(formData: FormData) {
   revalidatePath('/admin')
 }
 
-export async function deleteAllFlights(password: string) {
+export async function deleteAllEntries(password: string) {
   const session = await auth()
   if (!session?.user?.id || !session?.user?.email) {
     return { success: false, error: 'Unauthorized' }
@@ -425,20 +425,294 @@ export async function deleteAllFlights(password: string) {
     return { success: false, error: 'Incorrect password' }
   }
   
-  // Delete all flights for this user - CRITICAL: must filter by userId
-  // NOTE: Old flights might have userId = null, so we delete ALL if user is authenticated
-  // In a multi-user system, this should be reconsidered
-  const result = await prisma.flight.deleteMany({
-    where: { 
-      OR: [
-        { userId: session.user.id },
-        { userId: null }
-      ]
+  try {
+    // Delete all flights for this user
+    const flightResult = await prisma.flight.deleteMany({
+      where: { 
+        OR: [
+          { userId: session.user.id },
+          { userId: null }
+        ]
+      }
+    })
+
+    // Delete all glider flights
+    const gliderResult = await prisma.gliderFlight.deleteMany({
+      where: {
+        OR: [
+          { userId: session.user.id },
+          { userId: null }
+        ]
+      }
+    })
+
+    // Delete all simulator sessions
+    const simulatorResult = await prisma.simulatorSession.deleteMany({
+      where: {
+        OR: [
+          { userId: session.user.id },
+          { userId: null }
+        ]
+      }
+    })
+    
+    const totalDeleted = flightResult.count + gliderResult.count + simulatorResult.count
+    console.log(`Deleted ${totalDeleted} entries (${flightResult.count} flights, ${gliderResult.count} glider, ${simulatorResult.count} sim) for user ${session.user.email}`)
+    
+    revalidatePath('/')
+    return { success: true, deletedCount: totalDeleted }
+  } catch (error) {
+    console.error('Delete all entries error:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown database error' }
+  }
+}
+
+// ==================== GLIDER FLIGHT ACTIONS (PART SFCL.050) ====================
+
+export async function getGliderFlights(page: number = 1, pageSize?: number, year?: number) {
+  let limit = pageSize
+  if (!limit) {
+    const settings = await getSettings()
+    limit = settings.rowsPerPage
+  }
+  
+  const isAll = limit === -1
+  const safeLimit = isAll ? undefined : (limit || 14)
+
+  const where: Prisma.GliderFlightWhereInput = year ? {
+    date: {
+      gte: new Date(year, 0, 1),
+      lt: new Date(year + 1, 0, 1)
+    }
+  } : {}
+
+  const orderBy: Prisma.GliderFlightOrderByWithRelationInput[] = [
+    { date: 'asc' },
+    { departureTime: 'asc' },
+    { createdAt: 'asc' }
+  ]
+
+  const flights = await prisma.gliderFlight.findMany({
+    where,
+    orderBy,
+    ...(isAll ? {} : {
+      take: safeLimit,
+      skip: (page - 1) * (safeLimit as number),
+    })
+  })
+
+  const totalCount = await prisma.gliderFlight.count({ where })
+
+  const lifetimeAgg = await prisma.gliderFlight.aggregate({
+    _sum: {
+      totalTime: true,
+      launches: true,
     }
   })
-  
-  console.log(`Deleted ${result.count} flights for user ${session.user.email}`)
+
+  let previousTotals = null
+  if (page > 1 && !isAll && safeLimit) {
+    const previousFlights = await prisma.gliderFlight.findMany({
+      where,
+      orderBy,
+      take: (page - 1) * safeLimit,
+      select: {
+        totalTime: true,
+        launches: true,
+        picTime: true,
+        dualTime: true,
+        instructorTime: true,
+      }
+    })
+
+    previousTotals = previousFlights.reduce((acc, flight) => ({
+      totalTime: acc.totalTime + (flight.totalTime || 0),
+      launches: acc.launches + (flight.launches || 0),
+      picTime: acc.picTime + (flight.picTime || 0),
+      dualTime: acc.dualTime + (flight.dualTime || 0),
+      instructorTime: acc.instructorTime + (flight.instructorTime || 0),
+    }), {
+      totalTime: 0, launches: 0, picTime: 0, dualTime: 0, instructorTime: 0
+    })
+  }
+
+  return {
+    flights,
+    totalCount,
+    lifetimeTotals: lifetimeAgg._sum,
+    previousTotals: previousTotals || { totalTime: 0, launches: 0, picTime: 0, dualTime: 0, instructorTime: 0 }
+  }
+}
+
+export async function createGliderFlight(data: GliderFlightFormData) {
+  const flight = await prisma.gliderFlight.create({
+    data
+  })
   
   revalidatePath('/')
-  return { success: true, deletedCount: result.count }
+  return flight
+}
+
+export async function updateGliderFlight(id: string, data: GliderFlightFormData) {
+  const flight = await prisma.gliderFlight.update({
+    where: { id },
+    data
+  })
+  
+  revalidatePath('/')
+  return flight
+}
+
+export async function deleteGliderFlight(id: string) {
+  await prisma.gliderFlight.delete({ where: { id } })
+  revalidatePath('/')
+}
+
+export async function importGliderFlights(flights: GliderFlightFormData[]) {
+  await prisma.gliderFlight.createMany({
+    data: flights
+  })
+  
+  revalidatePath('/')
+}
+
+export async function getUniqueGliderRegistrations() {
+  const flights = await prisma.gliderFlight.findMany({
+    select: { gliderReg: true },
+    distinct: ['gliderReg'],
+    orderBy: { gliderReg: 'asc' }
+  })
+  return flights.map(f => f.gliderReg)
+}
+
+export async function getUniqueGliderModels() {
+  const flights = await prisma.gliderFlight.findMany({
+    select: { gliderModel: true },
+    distinct: ['gliderModel'],
+    orderBy: { gliderModel: 'asc' }
+  })
+  return flights.map(f => f.gliderModel)
+}
+
+export async function getGliderByRegistration(registration: string) {
+  const flight = await prisma.gliderFlight.findFirst({
+    where: { gliderReg: registration.toUpperCase() },
+    select: { gliderModel: true, gliderReg: true }
+  })
+  return flight
+}
+
+// ==================== SIMULATOR SESSION ACTIONS (FSTD) ====================
+
+export async function getSimulatorSessions(page: number = 1, pageSize?: number, year?: number) {
+  let limit = pageSize
+  if (!limit) {
+    const settings = await getSettings()
+    limit = settings.rowsPerPage
+  }
+  
+  const isAll = limit === -1
+  const safeLimit = isAll ? undefined : (limit || 14)
+
+  const where: Prisma.SimulatorSessionWhereInput = year ? {
+    date: {
+      gte: new Date(year, 0, 1),
+      lt: new Date(year + 1, 0, 1)
+    }
+  } : {}
+
+  const orderBy: Prisma.SimulatorSessionOrderByWithRelationInput[] = [
+    { date: 'asc' },
+    { createdAt: 'asc' }
+  ]
+
+  const sessions = await prisma.simulatorSession.findMany({
+    where,
+    orderBy,
+    ...(isAll ? {} : {
+      take: safeLimit,
+      skip: (page - 1) * (safeLimit as number),
+    })
+  })
+
+  const totalCount = await prisma.simulatorSession.count({ where })
+
+  const lifetimeAgg = await prisma.simulatorSession.aggregate({
+    _sum: {
+      totalTime: true,
+    }
+  })
+
+  let previousTotals = null
+  if (page > 1 && !isAll && safeLimit) {
+    const previousSessions = await prisma.simulatorSession.findMany({
+      where,
+      orderBy,
+      take: (page - 1) * safeLimit,
+      select: {
+        totalTime: true,
+      }
+    })
+
+    previousTotals = previousSessions.reduce((acc, session) => ({
+      totalTime: acc.totalTime + (session.totalTime || 0),
+    }), { totalTime: 0 })
+  }
+
+  return {
+    sessions,
+    totalCount,
+    lifetimeTotals: lifetimeAgg._sum,
+    previousTotals: previousTotals || { totalTime: 0 }
+  }
+}
+
+export async function createSimulatorSession(data: SimulatorSessionFormData) {
+  const session = await prisma.simulatorSession.create({
+    data
+  })
+  
+  revalidatePath('/')
+  return session
+}
+
+export async function updateSimulatorSession(id: string, data: SimulatorSessionFormData) {
+  const session = await prisma.simulatorSession.update({
+    where: { id },
+    data
+  })
+  
+  revalidatePath('/')
+  return session
+}
+
+export async function deleteSimulatorSession(id: string) {
+  await prisma.simulatorSession.delete({ where: { id } })
+  revalidatePath('/')
+}
+
+export async function importSimulatorSessions(sessions: SimulatorSessionFormData[]) {
+  await prisma.simulatorSession.createMany({
+    data: sessions
+  })
+  
+  revalidatePath('/')
+}
+
+export async function getUniqueSimulatorAircraftTypes() {
+  const sessions = await prisma.simulatorSession.findMany({
+    select: { aircraftType: true },
+    distinct: ['aircraftType'],
+    orderBy: { aircraftType: 'asc' }
+  })
+  return sessions.map(s => s.aircraftType)
+}
+
+export async function getUniqueFstdQualifications() {
+  const sessions = await prisma.simulatorSession.findMany({
+    select: { fstdQualification: true },
+    distinct: ['fstdQualification'],
+    orderBy: { fstdQualification: 'asc' }
+  })
+  return sessions.map(s => s.fstdQualification).filter(Boolean) as string[]
 }
