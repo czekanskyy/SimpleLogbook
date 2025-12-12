@@ -8,7 +8,7 @@ import { Upload, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import { useUI } from '@/app/context/UIContext'
 
 type ImportStatus = 'idle' | 'parsing' | 'uploading' | 'complete' | 'error'
-type LogbookType = 'aircraft' | 'glider' | 'simulator'
+import LogbookTabs, { LogbookType } from '@/app/components/LogbookTabs'
 
 interface CSVImportProps {
   logbookType: LogbookType
@@ -17,6 +17,7 @@ interface CSVImportProps {
 }
 
 export default function CSVImport({ logbookType, className, showLabel }: CSVImportProps) {
+  if (logbookType === 'home') return null
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState<ImportStatus>('idle')
   const [stats, setStats] = useState({ total: 0, success: 0, skipped: 0 })
